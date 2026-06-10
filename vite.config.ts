@@ -2,7 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const base = process.env.BASE_PATH ?? '/Speeky-Tester/';
+
 export default defineConfig({
+  base,
   server: {
     host: true,
     port: 5173,

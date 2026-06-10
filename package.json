@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview --host",
     "cap:sync": "npm run build && npx cap sync",
-    "cap:android": "npm run build && npx cap sync android && npx cap open android"
+    "cap:android": "npm run build && npx cap sync android && npx cap open android",
+    "build:pages": "BASE_PATH=/Speeky-Tester/ npm run build"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
