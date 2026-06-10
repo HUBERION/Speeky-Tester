@@ -19,7 +19,22 @@ npm install
 npm run dev
 ```
 
-Öffnen Sie `http://localhost:5173` im Browser (HTTPS oder localhost für Mikrofon-Zugriff).
+Öffnen Sie `http://localhost:5173` im Browser.
+
+### Vom iPhone / Tablet im WLAN testen
+
+Der Dev-Server ist für Netzwerk-Zugriff konfiguriert (`--host`). Nach `npm run dev` zeigt die Konsole z. B.:
+
+```text
+➜  Network: http://192.168.10.11:5173/
+```
+
+Diese **Network**-URL auf dem iPhone öffnen (PC und iPhone im gleichen WLAN).
+
+**Wichtig:**
+
+- Windows-Firewall: Beim ersten Start ggf. Zugriff für Node.js im privaten Netzwerk erlauben.
+- **Mikrofon auf dem iPhone:** Safari erlaubt `getUserMedia` nur über **HTTPS** oder `localhost` – nicht über `http://192.168.x.x`. Lädt die Seite, aber das Mikrofon geht nicht, liegt es daran. Dann: PWA per HTTPS deployen, `npm run cap:android` nutzen, oder lokal ein HTTPS-Dev-Setup (z. B. mkcert) einrichten.
 
 ## Produktions-Build
 
