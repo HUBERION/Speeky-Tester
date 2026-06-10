@@ -6,6 +6,7 @@ import {
   updateMeasurement,
 } from '../db';
 import { useSession } from '../hooks/useSession';
+import { getMeasurementDisplay } from '../lib/measurementDisplay';
 import type { Measurement, Speaker } from '../types';
 
 const statusLabel = {
@@ -66,13 +67,20 @@ export function ProtocolPage() {
         <div className="empty-state">Noch keine Messungen in dieser Sitzung.</div>
       ) : (
         measurements.map((m) => {
-          const speaker = getSpeaker(m.speakerId);
+          const speaker =
+            m.speakerId != null ? getSpeaker(m.speakerId) : undefined;
+          const display = getMeasurementDisplay(m, speaker);
           return (
             <div key={m.id} className="list-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="list-item-info">
-                  <strong>{speaker?.name ?? `ID ${m.speakerId}`}</strong>
-                  <small>{speaker?.location}</small>
+                  <strong>{display.name}</strong>
+                  <small>{display.location}</small>
+                  {display.isAdhoc && (
+                    <span className="badge badge-pending" style={{ marginTop: '0.25rem' }}>
+                      Ad-hoc
+                    </span>
+                  )}
                 </div>
                 <span className={`badge ${badgeClass[m.status]}`}>
                   {statusLabel[m.status]}

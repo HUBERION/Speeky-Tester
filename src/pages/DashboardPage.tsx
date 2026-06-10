@@ -14,6 +14,7 @@ export function DashboardPage() {
   const [stats, setStats] = useState({
     speakers: 0,
     tested: 0,
+    adhoc: 0,
     pass: 0,
     fail: 0,
   });
@@ -29,9 +30,11 @@ export function DashboardPage() {
         getAllSessions(),
       ]);
       setSessions(allSessions);
+      const listMeasurements = measurements.filter((m) => m.speakerId != null);
       setStats({
         speakers: speakers.length,
-        tested: measurements.length,
+        tested: new Set(listMeasurements.map((m) => m.speakerId)).size,
+        adhoc: measurements.filter((m) => m.speakerId == null).length,
         pass: measurements.filter((m) => m.status === 'pass').length,
         fail: measurements.filter((m) => m.status === 'fail').length,
       });
@@ -72,21 +75,27 @@ export function DashboardPage() {
         <div className="stat-grid">
           <div className="stat">
             <strong>{stats.tested}/{stats.speakers}</strong>
-            <span>Getestet</span>
+            <span>Liste</span>
+          </div>
+          <div className="stat">
+            <strong>{stats.adhoc}</strong>
+            <span>Ad-hoc</span>
           </div>
           <div className="stat">
             <strong>{stats.pass}</strong>
             <span>Bestanden</span>
           </div>
-          <div className="stat">
-            <strong>{stats.fail}</strong>
-            <span>Nicht best.</span>
-          </div>
         </div>
+        <p className="hint" style={{ marginTop: '0.5rem' }}>
+          {stats.fail} nicht bestanden (Liste + Ad-hoc)
+        </p>
       </div>
 
       <Link to="/measure" className="btn btn-primary">
-        Messung starten
+        Messung (Liste)
+      </Link>
+      <Link to="/measure?mode=adhoc" className="btn btn-secondary">
+        Ad-hoc Messung
       </Link>
       <Link to="/speakers" className="btn btn-secondary">
         Lautsprecher verwalten

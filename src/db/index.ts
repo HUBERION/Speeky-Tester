@@ -157,14 +157,16 @@ export async function getMeasurementForSpeaker(
 export async function addMeasurement(
   measurement: Omit<Measurement, 'id'>,
 ): Promise<number> {
-  const existing = await db.measurements
-    .where('sessionId')
-    .equals(measurement.sessionId)
-    .and((m) => m.speakerId === measurement.speakerId)
-    .first();
-  if (existing?.id) {
-    await db.measurements.put({ ...measurement, id: existing.id });
-    return existing.id;
+  if (measurement.speakerId != null) {
+    const existing = await db.measurements
+      .where('sessionId')
+      .equals(measurement.sessionId)
+      .and((m) => m.speakerId === measurement.speakerId)
+      .first();
+    if (existing?.id) {
+      await db.measurements.put({ ...measurement, id: existing.id });
+      return existing.id;
+    }
   }
   return (await db.measurements.add(measurement)) as number;
 }

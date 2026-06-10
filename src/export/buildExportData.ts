@@ -5,6 +5,7 @@ import {
   getSession,
 } from '../db';
 import { getDeviceInfo } from '../audio/analyzer';
+import { getMeasurementDisplay } from '../lib/measurementDisplay';
 import type { ExportData, ExportRow } from '../types';
 
 const APP_VERSION = '1.0.0';
@@ -19,10 +20,11 @@ export async function buildExportData(sessionId: number): Promise<ExportData> {
   ]);
   const speakerMap = new Map(speakers.map((s) => [s.id!, s]));
   const rows: ExportRow[] = measurements.map((m) => {
-    const speaker = speakerMap.get(m.speakerId);
+    const speaker = m.speakerId != null ? speakerMap.get(m.speakerId) : undefined;
+    const display = getMeasurementDisplay(m, speaker);
     return {
-      speakerName: speaker?.name ?? `ID ${m.speakerId}`,
-      location: speaker?.location ?? '',
+      speakerName: display.isAdhoc ? `[Ad-hoc] ${display.name}` : display.name,
+      location: display.location,
       frequencyHz: m.frequencyHz,
       frequencyToleranceHz: m.frequencyToleranceHz ?? 50,
       detected: m.detected,

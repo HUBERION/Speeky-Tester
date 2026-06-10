@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   addMeasurement,
   getAllSpeakers,
@@ -16,6 +16,7 @@ import { useSession } from '../hooks/useSession';
 import type { LiveFrame, MeasurementResult, Speaker } from '../types';
 
 type Phase = 'select' | 'countdown' | 'measuring' | 'result';
+type MeasureMode = 'list' | 'adhoc';
 
 const statusLabel = {
   pass: 'Bestanden',
@@ -25,10 +26,16 @@ const statusLabel = {
 
 export function MeasurePage() {
   const { session } = useSession();
+  const [searchParams] = useSearchParams();
   const analyzerRef = useRef<AudioAnalyzer | null>(null);
+  const [mode, setMode] = useState<MeasureMode>(
+    searchParams.get('mode') === 'adhoc' ? 'adhoc' : 'list',
+  );
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const [testedIds, setTestedIds] = useState<Set<number>>(new Set());
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [adhocLabel, setAdhocLabel] = useState('');
+  const [adhocLocation, setAdhocLocation] = useState('');
   const [frequency, setFrequency] = useState(19000);
   const [frequencyTolerance, setFrequencyTolerance] = useState(50);
   const [duration, setDuration] = useState(5000);
@@ -46,12 +53,20 @@ export function MeasurePage() {
       getMeasurementsForSession(session.id),
     ]);
     setSpeakers(allSpeakers);
-    setTestedIds(new Set(measurements.map((m) => m.speakerId)));
+    setTestedIds(
+      new Set(
+        measurements
+          .filter((m) => m.speakerId != null)
+          .map((m) => m.speakerId!),
+      ),
+    );
     setFrequency(session.settings.defaultFrequency);
     setFrequencyTolerance(session.settings.frequencyToleranceHz);
     setDuration(session.settings.defaultDurationMs);
-    if (allSpeakers.length > 0 && !selectedId) {
-      const next = allSpeakers.find((s) => !measurements.some((m) => m.speakerId === s.id));
+    if (allSpeakers.length > 0 && selectedId == null) {
+      const next = allSpeakers.find(
+        (s) => !measurements.some((m) => m.speakerId === s.id),
+      );
       setSelectedId(next?.id ?? allSpeakers[0].id ?? null);
     }
   }, [session, selectedId]);
@@ -61,16 +76,25 @@ export function MeasurePage() {
   }, [load]);
 
   useEffect(() => {
+    if (searchParams.get('mode') === 'adhoc') {
+      setMode('adhoc');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     return () => {
       analyzerRef.current?.stop();
     };
   }, []);
 
   const selected = speakers.find((s) => s.id === selectedId);
+  const canMeasure =
+    session?.id &&
+    (mode === 'adhoc' || (mode === 'list' && selectedId != null));
 
   async function startCountdown() {
     setError('');
-    if (!selectedId || !session?.id) return;
+    if (!canMeasure) return;
     setPhase('countdown');
     setCountdown(3);
     for (let i = 3; i > 0; i--) {
@@ -81,7 +105,7 @@ export function MeasurePage() {
   }
 
   async function runMeasurement() {
-    if (!selectedId || !session?.id) return;
+    if (!session?.id || !canMeasure) return;
     setPhase('measuring');
     setLive(null);
     setResult(null);
@@ -111,10 +135,10 @@ export function MeasurePage() {
   }
 
   async function saveResult() {
-    if (!result || !selectedId || !session?.id) return;
-    await addMeasurement({
+    if (!result || !session?.id || !canMeasure) return;
+
+    const base = {
       sessionId: session.id,
-      speakerId: selectedId,
       frequencyHz: frequency,
       frequencyToleranceHz: frequencyTolerance,
       durationMs: duration,
@@ -129,29 +153,37 @@ export function MeasurePage() {
       status: result.status,
       notes: notes.trim() || undefined,
       deviceInfo: getDeviceInfo(),
-    });
+    };
+
+    if (mode === 'adhoc') {
+      const label =
+        adhocLabel.trim() ||
+        `Ad-hoc ${new Date().toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+      await addMeasurement({
+        ...base,
+        adhocLabel: label,
+        adhocLocation: adhocLocation.trim() || undefined,
+      });
+      setAdhocLabel('');
+      setAdhocLocation('');
+    } else {
+      await addMeasurement({
+        ...base,
+        speakerId: selectedId!,
+      });
+      const idx = speakers.findIndex((s) => s.id === selectedId);
+      const next = speakers.slice(idx + 1).find((s) => !testedIds.has(s.id!));
+      if (next?.id) setSelectedId(next.id);
+    }
+
     setNotes('');
     setResult(null);
     setPhase('select');
-    const idx = speakers.findIndex((s) => s.id === selectedId);
-    const next = speakers.slice(idx + 1).find((s) => !testedIds.has(s.id!));
-    if (next?.id) setSelectedId(next.id);
     await load();
   }
 
   if (!session) {
     return <p>Lade Sitzung…</p>;
-  }
-
-  if (speakers.length === 0) {
-    return (
-      <div className="empty-state">
-        <p>Keine Lautsprecher vorhanden.</p>
-        <Link to="/speakers" className="btn btn-primary">
-          Lautsprecher hinzufügen
-        </Link>
-      </div>
-    );
   }
 
   return (
@@ -163,28 +195,101 @@ export function MeasurePage() {
       )}
 
       <div className="card">
-        <h2>Lautsprecher wählen</h2>
-        <div className="form-group">
-          <select
-            value={selectedId ?? ''}
-            onChange={(e) => setSelectedId(Number(e.target.value))}
-            disabled={phase !== 'select' && phase !== 'result'}
+        <h2>Messmodus</h2>
+        <div className="btn-row">
+          <button
+            type="button"
+            className={`btn ${mode === 'list' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setMode('list')}
+            disabled={phase === 'measuring' || phase === 'countdown'}
           >
-            {speakers.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} – {s.location}
-                {testedIds.has(s.id!) ? ' ✓' : ''}
-              </option>
-            ))}
-          </select>
+            Aus Liste
+          </button>
+          <button
+            type="button"
+            className={`btn ${mode === 'adhoc' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setMode('adhoc')}
+            disabled={phase === 'measuring' || phase === 'countdown'}
+          >
+            Ad-hoc
+          </button>
         </div>
-        {selected && (
-          <p className="hint">
-            {selected.note || 'Keine Notiz'} · Fortschritt:{' '}
-            {testedIds.size}/{speakers.length}
-          </p>
-        )}
+        <p className="hint">
+          {mode === 'adhoc'
+            ? 'Schnellmessung ohne Lautsprecher aus der Liste – z. B. Stichprobe oder Test vor Ort.'
+            : 'Messung einem Lautsprecher aus der Liste zuordnen.'}
+        </p>
       </div>
+
+      {mode === 'list' ? (
+        <div className="card">
+          <h2>Lautsprecher wählen</h2>
+          {speakers.length === 0 ? (
+            <div className="empty-state">
+              <p>Keine Lautsprecher in der Liste.</p>
+              <Link to="/speakers" className="btn btn-secondary">
+                Lautsprecher hinzufügen
+              </Link>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setMode('adhoc')}
+              >
+                Stattdessen Ad-hoc messen
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="form-group">
+                <select
+                  value={selectedId ?? ''}
+                  onChange={(e) => setSelectedId(Number(e.target.value))}
+                  disabled={phase !== 'select' && phase !== 'result'}
+                >
+                  {speakers.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} – {s.location}
+                      {testedIds.has(s.id!) ? ' ✓' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selected && (
+                <p className="hint">
+                  {selected.note || 'Keine Notiz'} · Fortschritt:{' '}
+                  {testedIds.size}/{speakers.length}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="card">
+          <h2>Ad-hoc Messung</h2>
+          <div className="form-group">
+            <label>Bezeichnung (optional)</label>
+            <input
+              placeholder="z. B. Stichprobe Flur, Test PA-Kanal 3"
+              value={adhocLabel}
+              onChange={(e) => setAdhocLabel(e.target.value)}
+              disabled={phase === 'measuring' || phase === 'countdown'}
+            />
+          </div>
+          <div className="form-group">
+            <label>Standort (optional)</label>
+            <input
+              placeholder="z. B. Technikraum, EG"
+              value={adhocLocation}
+              onChange={(e) => setAdhocLocation(e.target.value)}
+              disabled={phase === 'measuring' || phase === 'countdown'}
+            />
+          </div>
+          <p className="hint">
+            Ohne Bezeichnung wird automatisch ein Zeitstempel verwendet. Jede
+            Ad-hoc-Messung wird als eigener Eintrag gespeichert.
+          </p>
+        </div>
+      )}
 
       <div className="card">
         <h2>Messparameter</h2>
@@ -229,7 +334,7 @@ export function MeasurePage() {
         </div>
       </div>
 
-      {phase === 'select' && (
+      {phase === 'select' && canMeasure && (
         <div className="card">
           <p className="hint">
             Starten Sie den <strong>externen Testton</strong> an der PA-Anlage.

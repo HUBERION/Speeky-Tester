@@ -25,7 +25,9 @@ export interface TestSession {
 export interface Measurement {
   id?: number;
   sessionId: number;
-  speakerId: number;
+  speakerId?: number;
+  adhocLabel?: string;
+  adhocLocation?: string;
   frequencyHz: number;
   frequencyToleranceHz?: number;
   durationMs: number;
