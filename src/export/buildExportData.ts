@@ -24,6 +24,7 @@ export async function buildExportData(sessionId: number): Promise<ExportData> {
       speakerName: speaker?.name ?? `ID ${m.speakerId}`,
       location: speaker?.location ?? '',
       frequencyHz: m.frequencyHz,
+      frequencyToleranceHz: m.frequencyToleranceHz ?? 50,
       detected: m.detected,
       levelDbfs: m.levelDbfs,
       noiseFloorDbfs: m.noiseFloorDbfs,

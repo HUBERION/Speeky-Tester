@@ -9,12 +9,14 @@ import type {
 
 const DEFAULT_SETTINGS: AppSettings = {
   defaultFrequency: 19000,
+  frequencyToleranceHz: 50,
   passSnrThreshold: 6,
   defaultDurationMs: 5000,
 };
 
 const DEFAULT_SESSION_SETTINGS = {
   defaultFrequency: 19000,
+  frequencyToleranceHz: 50,
   passSnrThreshold: 6,
   defaultDurationMs: 5000,
 };
@@ -42,7 +44,9 @@ export const db = new SpeekyDatabase();
 
 export async function getAppSettings(): Promise<AppSettings> {
   const existing = await db.appSettings.toCollection().first();
-  if (existing) return existing;
+  if (existing) {
+    return { ...DEFAULT_SETTINGS, ...existing, id: existing.id };
+  }
   const id = await db.appSettings.add(DEFAULT_SETTINGS);
   return { ...DEFAULT_SETTINGS, id };
 }
@@ -96,8 +100,16 @@ export async function getAllSessions(): Promise<TestSession[]> {
   return db.sessions.orderBy('createdAt').reverse().toArray();
 }
 
+function withSessionDefaults(session: TestSession): TestSession {
+  return {
+    ...session,
+    settings: { ...DEFAULT_SESSION_SETTINGS, ...session.settings },
+  };
+}
+
 export async function getSession(id: number): Promise<TestSession | undefined> {
-  return db.sessions.get(id);
+  const session = await db.sessions.get(id);
+  return session ? withSessionDefaults(session) : undefined;
 }
 
 export async function createSession(name: string): Promise<number> {
@@ -107,6 +119,7 @@ export async function createSession(name: string): Promise<number> {
     createdAt: new Date().toISOString(),
     settings: {
       defaultFrequency: settings.defaultFrequency,
+      frequencyToleranceHz: settings.frequencyToleranceHz,
       passSnrThreshold: settings.passSnrThreshold,
       defaultDurationMs: settings.defaultDurationMs,
     },

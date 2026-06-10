@@ -1,21 +1,31 @@
 import type { LiveFrame, MeasurementResult } from '../types';
 
 const FFT_SIZE = 8192;
-const BIN_TOLERANCE = 2;
+export const DEFAULT_FREQUENCY_TOLERANCE_HZ = 50;
 
 function amplitudeToDbfs(amplitude: number): number {
   const floor = 1e-10;
   return 20 * Math.log10(Math.max(amplitude, floor));
 }
 
+function hzToBin(frequencyHz: number, sampleRate: number, fftSize: number): number {
+  return Math.round((frequencyHz * fftSize) / sampleRate);
+}
+
 function getBinRange(
   frequencyHz: number,
+  frequencyToleranceHz: number,
   sampleRate: number,
   fftSize: number,
 ): { center: number; start: number; end: number } {
-  const center = Math.round((frequencyHz * fftSize) / sampleRate);
-  const start = Math.max(1, center - BIN_TOLERANCE);
-  const end = Math.min(fftSize / 2 - 1, center + BIN_TOLERANCE);
+  const center = hzToBin(frequencyHz, sampleRate, fftSize);
+  const lowHz = Math.max(0, frequencyHz - frequencyToleranceHz);
+  const highHz = frequencyHz + frequencyToleranceHz;
+  const start = Math.max(1, Math.floor((lowHz * fftSize) / sampleRate));
+  const end = Math.min(
+    fftSize / 2 - 1,
+    Math.ceil((highHz * fftSize) / sampleRate),
+  );
   return { center, start, end };
 }
 
@@ -39,16 +49,16 @@ function getNoiseFloor(
   center: number,
   start: number,
   end: number,
+  marginBins: number,
 ): number {
   const neighborValues: number[] = [];
-  const margin = BIN_TOLERANCE + 3;
   for (
-    let i = Math.max(1, start - margin);
-    i <= Math.min(data.length - 1, end + margin);
+    let i = Math.max(1, start - marginBins);
+    i <= Math.min(data.length - 1, end + marginBins);
     i++
   ) {
     if (i < start || i > end) {
-      if (Math.abs(i - center) > BIN_TOLERANCE) {
+      if (Math.abs(i - center) > Math.min(2, marginBins)) {
         neighborValues.push(data[i] / 255);
       }
     }
@@ -68,6 +78,13 @@ function buildSpectrum(data: Uint8Array, maxBins = 128): number[] {
     spectrum.push(data[i] / 255);
   }
   return spectrum;
+}
+
+export function formatFrequencyBand(
+  frequencyHz: number,
+  toleranceHz: number,
+): string {
+  return `${frequencyHz} Hz ±${toleranceHz} Hz`;
 }
 
 export class AudioAnalyzer {
@@ -106,7 +123,10 @@ export class AudioAnalyzer {
     this.dataArray = null;
   }
 
-  analyzeFrame(frequencyHz: number): LiveFrame {
+  analyzeFrame(
+    frequencyHz: number,
+    frequencyToleranceHz: number = DEFAULT_FREQUENCY_TOLERANCE_HZ,
+  ): LiveFrame {
     if (!this.analyser || !this.dataArray || !this.context) {
       return {
         levelDbfs: -100,
@@ -120,11 +140,23 @@ export class AudioAnalyzer {
     const sampleRate = this.context.sampleRate;
     const { center, start, end } = getBinRange(
       frequencyHz,
+      frequencyToleranceHz,
       sampleRate,
       FFT_SIZE,
     );
+    const guardHz = Math.max(frequencyToleranceHz, 50);
+    const marginBins = Math.max(
+      3,
+      Math.ceil((guardHz * FFT_SIZE) / sampleRate),
+    );
     const amplitude = getTargetAmplitude(this.dataArray, start, end);
-    const noise = getNoiseFloor(this.dataArray, center, start, end);
+    const noise = getNoiseFloor(
+      this.dataArray,
+      center,
+      start,
+      end,
+      marginBins,
+    );
     const levelDbfs = amplitudeToDbfs(amplitude);
     const noiseFloorDbfs = amplitudeToDbfs(noise);
     const snrDb = levelDbfs - noiseFloorDbfs;
@@ -141,13 +173,14 @@ export class AudioAnalyzer {
     frequencyHz: number,
     durationMs: number,
     passSnrThreshold: number,
+    frequencyToleranceHz: number = DEFAULT_FREQUENCY_TOLERANCE_HZ,
     onFrame?: (frame: LiveFrame) => void,
   ): Promise<MeasurementResult> {
     await this.start();
     const frames: LiveFrame[] = [];
     const start = performance.now();
     while (performance.now() - start < durationMs) {
-      const frame = this.analyzeFrame(frequencyHz);
+      const frame = this.analyzeFrame(frequencyHz, frequencyToleranceHz);
       frames.push(frame);
       onFrame?.(frame);
       await new Promise((r) => setTimeout(r, 50));

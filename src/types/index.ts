@@ -2,6 +2,7 @@ export type MeasurementStatus = 'pass' | 'fail' | 'inconclusive';
 
 export interface SessionSettings {
   defaultFrequency: number;
+  frequencyToleranceHz: number;
   passSnrThreshold: number;
   defaultDurationMs: number;
 }
@@ -26,6 +27,7 @@ export interface Measurement {
   sessionId: number;
   speakerId: number;
   frequencyHz: number;
+  frequencyToleranceHz?: number;
   durationMs: number;
   timestamp: string;
   detected: boolean;
@@ -51,6 +53,7 @@ export interface Calibration {
 export interface AppSettings {
   id?: number;
   defaultFrequency: number;
+  frequencyToleranceHz: number;
   passSnrThreshold: number;
   defaultDurationMs: number;
 }
@@ -78,6 +81,7 @@ export interface ExportRow {
   speakerName: string;
   location: string;
   frequencyHz: number;
+  frequencyToleranceHz: number;
   detected: boolean;
   levelDbfs: number;
   noiseFloorDbfs: number;

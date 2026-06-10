@@ -9,6 +9,7 @@ import {
 import {
   applySplCalibration,
   AudioAnalyzer,
+  formatFrequencyBand,
   getDeviceInfo,
 } from '../audio/analyzer';
 import { useSession } from '../hooks/useSession';
@@ -29,6 +30,7 @@ export function MeasurePage() {
   const [testedIds, setTestedIds] = useState<Set<number>>(new Set());
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [frequency, setFrequency] = useState(19000);
+  const [frequencyTolerance, setFrequencyTolerance] = useState(50);
   const [duration, setDuration] = useState(5000);
   const [phase, setPhase] = useState<Phase>('select');
   const [countdown, setCountdown] = useState(3);
@@ -46,6 +48,7 @@ export function MeasurePage() {
     setSpeakers(allSpeakers);
     setTestedIds(new Set(measurements.map((m) => m.speakerId)));
     setFrequency(session.settings.defaultFrequency);
+    setFrequencyTolerance(session.settings.frequencyToleranceHz);
     setDuration(session.settings.defaultDurationMs);
     if (allSpeakers.length > 0 && !selectedId) {
       const next = allSpeakers.find((s) => !measurements.some((m) => m.speakerId === s.id));
@@ -91,6 +94,7 @@ export function MeasurePage() {
         frequency,
         duration,
         session.settings.passSnrThreshold,
+        frequencyTolerance,
         setLive,
       );
       const levelDbSpl = applySplCalibration(measurement.levelDbfs, calibration);
@@ -112,6 +116,7 @@ export function MeasurePage() {
       sessionId: session.id,
       speakerId: selectedId,
       frequencyHz: frequency,
+      frequencyToleranceHz: frequencyTolerance,
       durationMs: duration,
       timestamp: new Date().toISOString(),
       detected: result.detected,
@@ -195,6 +200,21 @@ export function MeasurePage() {
             disabled={phase === 'measuring' || phase === 'countdown'}
           />
           <p className="hint">Empfohlen: 17.000–20.000 Hz</p>
+        </div>
+        <div className="form-group">
+          <label>Frequenz-Streuung (± Hz)</label>
+          <input
+            type="number"
+            min={0}
+            max={500}
+            step={10}
+            value={frequencyTolerance}
+            onChange={(e) => setFrequencyTolerance(Number(e.target.value))}
+            disabled={phase === 'measuring' || phase === 'countdown'}
+          />
+          <p className="hint">
+            Messbereich: {formatFrequencyBand(frequency, frequencyTolerance)}
+          </p>
         </div>
         <div className="form-group">
           <label>Messdauer (Sekunden)</label>

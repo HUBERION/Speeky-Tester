@@ -79,7 +79,8 @@ export function ProtocolPage() {
                 </span>
               </div>
               <small>
-                {m.frequencyHz} Hz · Erkannt: {m.detected ? 'Ja' : 'Nein'} ·{' '}
+                {m.frequencyHz} Hz ±{m.frequencyToleranceHz ?? 50} Hz · Erkannt:{' '}
+                {m.detected ? 'Ja' : 'Nein'} ·{' '}
                 {m.levelDbfs.toFixed(1)} dBFS · SNR {m.snrDb.toFixed(1)} dB
                 {m.levelDbSpl !== undefined && ` · ${m.levelDbSpl.toFixed(1)} dB SPL`}
               </small>

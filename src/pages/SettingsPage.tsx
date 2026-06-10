@@ -47,7 +47,8 @@ export function SettingsPage() {
     try {
       if (!analyzerRef.current) analyzerRef.current = new AudioAnalyzer();
       const freq = settings?.defaultFrequency ?? 19000;
-      const result = await analyzerRef.current.measure(freq, 3000, 0);
+      const tolerance = settings?.frequencyToleranceHz ?? 50;
+      const result = await analyzerRef.current.measure(freq, 3000, 0, tolerance);
       setMeasuredDbfs(result.levelDbfs);
     } finally {
       setMeasuring(false);
@@ -96,6 +97,25 @@ export function SettingsPage() {
               })
             }
           />
+        </div>
+        <div className="form-group">
+          <label>Standard Frequenz-Streuung (± Hz)</label>
+          <input
+            type="number"
+            min={0}
+            max={500}
+            step={10}
+            value={settings.frequencyToleranceHz}
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                frequencyToleranceHz: Number(e.target.value),
+              })
+            }
+          />
+          <p className="hint">
+            Signal wird im Bereich Zielfrequenz ± Streuung gemessen (z. B. ±50 Hz).
+          </p>
         </div>
         <div className="form-group">
           <label>SNR-Schwelle für „Bestanden“ (dB)</label>
