@@ -36,6 +36,24 @@ Diese **Network**-URL auf dem iPhone öffnen (PC und iPhone im gleichen WLAN).
 - Windows-Firewall: Beim ersten Start ggf. Zugriff für Node.js im privaten Netzwerk erlauben.
 - **Mikrofon auf dem iPhone:** Safari erlaubt `getUserMedia` nur über **HTTPS** oder `localhost` – nicht über `http://192.168.x.x`. Lädt die Seite, aber das Mikrofon geht nicht, liegt es daran. Dann: PWA per HTTPS deployen, `npm run cap:android` nutzen, oder lokal ein HTTPS-Dev-Setup (z. B. mkcert) einrichten.
 
+## Test-Deployment (GitHub Pages)
+
+Die App wird automatisch auf den Branch `gh-pages` deployed.
+
+**Einmalig aktivieren** (Repo-Besitzer):
+
+1. Öffnen: https://github.com/HUBERION/Speeky-Tester/settings/pages
+2. **Source:** Deploy from a branch
+3. **Branch:** `gh-pages` → `/ (root)` → Save
+
+Danach erreichbar unter:
+
+**https://huberion.github.io/Speeky-Tester/**
+
+(HTTPS – Mikrofon auf dem iPhone funktioniert damit.)
+
+Bei jedem Push auf `main` baut der GitHub-Workflow neu und aktualisiert `gh-pages`.
+
 ## Produktions-Build
 
 ```bash
