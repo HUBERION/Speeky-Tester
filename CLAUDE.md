@@ -42,14 +42,31 @@ src/
   db/index.ts              Dexie-Schema + alle DB-Zugriffsfunktionen
   types/index.ts           Zentrale Typen (Single Source of Truth für Datenmodell)
   hooks/useSession.ts      Aktive Testsitzung laden/wechseln (localStorage-Pointer)
+  i18n/                    Mehrsprachigkeit (EN/DE) – siehe Abschnitt unten
   pages/                   Eine Datei pro Route (Dashboard, Speakers, Measure, Protocol, Export, Settings)
-  components/              Layout (Navigation) + ImportModal
-  import/csvXls.ts         CSV/XLS parsen, Spalten-Mapping raten, Duplikate warnen
-  export/                  buildExportData → csv.ts | pdf.ts | docx.ts
+  components/              Layout (Navigation + Sprachumschalter) + ImportModal
+  import/csvXls.ts         CSV/XLS parsen, Spalten-Mapping raten, Duplikate warnen, Demo-Vorlagen
+  export/                  buildExportData → csv.ts | pdf.ts | docx.ts | xlsx.ts
   lib/measurementDisplay.ts  Anzeige-Helfer: Ad-hoc vs. Listen-Lautsprecher
 ```
 
 Routing in `src/App.tsx`; alle Seiten liegen unter einem gemeinsamen `<Layout>`.
+**Sitzungsverwaltung** (anlegen/wechseln/löschen/Übernahme) liegt im **Speakers-Tab**
+(`SpeakersPage`) zusammen mit der Lautsprecherliste; das Dashboard ist nur noch
+Übersicht (aktive Sitzung, Fortschritt, Messen-Links).
+
+## Mehrsprachigkeit (i18n)
+
+Eigene, leichtgewichtige Lösung ohne Library. **Standardsprache Englisch**, Deutsch
+umschaltbar (Sprachauswahl im Header). Auswahl wird in `localStorage` (`lang`) gehalten;
+ohne Auswahl wird die Browsersprache erkannt (de → Deutsch, sonst Englisch).
+
+- `i18n/translations.ts` – alle Strings als verschachteltes Dict (`resources.en` / `.de`), Dot-Pfad-Keys.
+- `i18n/core.ts` – `translate()`, `useT()`-Hook, `I18nContext`, plus **`tGlobal()`** und Datums-Helfer (`fmtDateTime`, `fmtDateNow`, `localeFor`) für **Nicht-React-Code** (db, exports), die die modulweite aktuelle Sprache nutzen.
+- `i18n/LanguageProvider.tsx` – Provider (getrennt, damit `react-refresh/only-export-components` nicht meckert); in `main.tsx` um die App gelegt.
+- In Komponenten: `const { t, lang, setLang } = useT();` und `t('bereich.key', { var })`.
+- Neue Strings **immer in beide Sprachen** in `translations.ts` eintragen; fehlt ein Key, fällt `translate` auf Englisch und dann den Key selbst zurück.
+- Datumsausgaben über `fmtDateTime`/`fmtDateNow` (Locale folgt der Sprache), nicht hartkodiertes `toLocaleString('de-DE')`.
 
 ## Datenmodell (Dexie, DB-Name `speeky-tester`, **v2**)
 

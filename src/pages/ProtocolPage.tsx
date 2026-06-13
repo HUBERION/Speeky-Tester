@@ -6,22 +6,18 @@ import {
   updateMeasurement,
 } from '../db';
 import { useSession } from '../hooks/useSession';
+import { fmtDateTime, useT } from '../i18n';
 import { getMeasurementDisplay } from '../lib/measurementDisplay';
-import type { Measurement, Speaker } from '../types';
+import type { Measurement, MeasurementStatus, Speaker } from '../types';
 
-const statusLabel = {
-  pass: 'Bestanden',
-  fail: 'Nicht bestanden',
-  inconclusive: 'Unklar',
-};
-
-const badgeClass = {
+const badgeClass: Record<MeasurementStatus, string> = {
   pass: 'badge-pass',
   fail: 'badge-fail',
   inconclusive: 'badge-inconclusive',
 };
 
 export function ProtocolPage() {
+  const { t } = useT();
   const { session } = useSession();
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
@@ -53,18 +49,18 @@ export function ProtocolPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('Messung löschen?')) return;
+    if (!confirm(t('protocol.deleteConfirm'))) return;
     await deleteMeasurement(id);
     await load();
   }
 
-  if (!session) return <p>Lade…</p>;
+  if (!session) return <p>{t('common.loading')}</p>;
 
   return (
     <div className="card">
-      <h2>Protokoll – {session.name}</h2>
+      <h2>{t('protocol.title', { name: session.name })}</h2>
       {measurements.length === 0 ? (
-        <div className="empty-state">Noch keine Messungen in dieser Sitzung.</div>
+        <div className="empty-state">{t('protocol.empty')}</div>
       ) : (
         measurements.map((m) => {
           const speaker =
@@ -78,36 +74,36 @@ export function ProtocolPage() {
                   <small>{display.location}</small>
                   {display.isAdhoc && (
                     <span className="badge badge-pending" style={{ marginTop: '0.25rem' }}>
-                      Ad-hoc
+                      {t('protocol.adhoc')}
                     </span>
                   )}
                 </div>
                 <span className={`badge ${badgeClass[m.status]}`}>
-                  {statusLabel[m.status]}
+                  {t(`status.${m.status}`)}
                 </span>
               </div>
               <small>
-                {m.frequencyHz} Hz ±{m.frequencyToleranceHz ?? 50} Hz · Erkannt:{' '}
-                {m.detected ? 'Ja' : 'Nein'} ·{' '}
+                {m.frequencyHz} Hz ±{m.frequencyToleranceHz ?? 50} Hz ·{' '}
+                {t('protocol.detected')}: {m.detected ? t('common.yes') : t('common.no')} ·{' '}
                 {m.levelDbfs.toFixed(1)} dBFS · SNR {m.snrDb.toFixed(1)} dB
                 {m.levelDbSpl !== undefined && ` · ${m.levelDbSpl.toFixed(1)} dB SPL`}
               </small>
-              <small>{new Date(m.timestamp).toLocaleString('de-DE')}</small>
+              <small>{fmtDateTime(m.timestamp)}</small>
               {editingId === m.id ? (
                 <div style={{ marginTop: '0.5rem' }}>
                   <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
                   <div className="btn-row">
                     <button type="button" className="btn btn-primary" onClick={() => void saveNotes(m)}>
-                      Speichern
+                      {t('common.save')}
                     </button>
                     <button type="button" className="btn btn-secondary" onClick={() => setEditingId(null)}>
-                      Abbrechen
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
-                  {m.notes && <small>Notiz: {m.notes}</small>}
+                  {m.notes && <small>{t('protocol.noteLabel', { note: m.notes })}</small>}
                   <div className="btn-row" style={{ marginTop: '0.5rem' }}>
                     <button
                       type="button"
@@ -117,14 +113,14 @@ export function ProtocolPage() {
                         setEditNotes(m.notes ?? '');
                       }}
                     >
-                      Notiz bearbeiten
+                      {t('protocol.editNote')}
                     </button>
                     <button
                       type="button"
                       className="btn btn-danger"
                       onClick={() => void handleDelete(m.id!)}
                     >
-                      Löschen
+                      {t('common.delete')}
                     </button>
                   </div>
                 </>

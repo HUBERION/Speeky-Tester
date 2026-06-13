@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
+import { fmtDateNow, tGlobal } from '../i18n';
 import type {
   AppSettings,
   Calibration,
@@ -55,7 +56,7 @@ class SpeekyDatabase extends Dexie {
         }
         if (targetId == null) {
           targetId = (await sessionsTable.add({
-            name: `Migriert ${new Date().toLocaleDateString('de-DE')}`,
+            name: tGlobal('sessions.migratedName', { date: fmtDateNow() }),
             createdAt: new Date().toISOString(),
             settings: { ...DEFAULT_SESSION_SETTINGS },
           })) as number;
@@ -264,7 +265,7 @@ export async function ensureDefaultSession(): Promise<TestSession> {
     return sessions[0];
   }
   const id = await createSession(
-    `Messung ${new Date().toLocaleDateString('de-DE')}`,
+    tGlobal('sessions.defaultName', { date: fmtDateNow() }),
   );
   await setActiveSessionId(id);
   const session = await getSession(id);
