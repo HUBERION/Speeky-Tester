@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { addSpeaker, getSpeakersForSession } from '../db';
+import { useT } from '../i18n';
 import {
   downloadDemoCsv,
   downloadDemoXlsx,
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function ImportModal({ sessionId, onClose, onImported }: Props) {
+  const { t } = useT();
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -34,7 +36,7 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
       const speakers = mapRowsToSpeakers(data.rows, guessColumnMapping(data.headers));
       setWarnings(findDuplicateWarnings(existing, speakers));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import fehlgeschlagen');
+      setError(e instanceof Error ? e.message : t('importModal.failed'));
     }
   }
 
@@ -48,7 +50,7 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
       }
       onImported();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import fehlgeschlagen');
+      setError(e instanceof Error ? e.message : t('importModal.failed'));
     } finally {
       setLoading(false);
     }
@@ -57,12 +59,12 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>CSV / XLS Import</h2>
+        <h2>{t('importModal.title')}</h2>
         {error && <p style={{ color: 'var(--danger)' }}>{error}</p>}
 
         {!preview && (
           <div className="form-group">
-            <label>Datei auswählen</label>
+            <label>{t('importModal.chooseFile')}</label>
             <input
               type="file"
               accept=".csv,.txt,.xls,.xlsx"
@@ -71,23 +73,21 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
                 if (file) void handleFile(file);
               }}
             />
-            <p className="hint">
-              Erwartete Spalten: Name, Standort, Notiz (optional)
-            </p>
+            <p className="hint">{t('importModal.expectedColumns')}</p>
             <div className="btn-row" style={{ marginTop: '0.75rem' }}>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => downloadDemoCsv()}
               >
-                Vorlage CSV
+                {t('importModal.templateCsv')}
               </button>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => downloadDemoXlsx()}
               >
-                Vorlage Excel
+                {t('importModal.templateExcel')}
               </button>
             </div>
           </div>
@@ -95,9 +95,9 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
 
         {preview && mapping && (
           <>
-            <p>{preview.rows.length} Zeilen erkannt</p>
+            <p>{t('importModal.rowsDetected', { count: preview.rows.length })}</p>
             <div className="form-group">
-              <label>Name-Spalte</label>
+              <label>{t('importModal.nameColumn')}</label>
               <select
                 value={mapping.name}
                 onChange={(e) =>
@@ -112,7 +112,7 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
               </select>
             </div>
             <div className="form-group">
-              <label>Standort-Spalte</label>
+              <label>{t('importModal.locationColumn')}</label>
               <select
                 value={mapping.location}
                 onChange={(e) =>
@@ -127,7 +127,7 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
               </select>
             </div>
             <div className="form-group">
-              <label>Notiz-Spalte (optional)</label>
+              <label>{t('importModal.noteColumn')}</label>
               <select
                 value={mapping.note ?? ''}
                 onChange={(e) =>
@@ -137,7 +137,7 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
                   })
                 }
               >
-                <option value="">– keine –</option>
+                <option value="">{t('importModal.noneOption')}</option>
                 {preview.headers.map((h) => (
                   <option key={h} value={h}>
                     {h}
@@ -147,8 +147,11 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
             </div>
             {warnings.length > 0 && (
               <p className="hint" style={{ color: 'var(--warning)' }}>
-                Duplikat-Warnung ({warnings.length}): {warnings.slice(0, 3).join(', ')}
-                {warnings.length > 3 ? '…' : ''} – werden trotzdem importiert.
+                {t('importModal.duplicateWarning', {
+                  count: warnings.length,
+                  names: warnings.slice(0, 3).join(', '),
+                  more: warnings.length > 3 ? '…' : '',
+                })}
               </p>
             )}
             <button
@@ -157,13 +160,15 @@ export function ImportModal({ sessionId, onClose, onImported }: Props) {
               disabled={loading}
               onClick={() => void handleImport()}
             >
-              {loading ? 'Importiere…' : `${preview.rows.length} importieren`}
+              {loading
+                ? t('importModal.importing')
+                : t('importModal.importN', { count: preview.rows.length })}
             </button>
           </>
         )}
 
         <button type="button" className="btn btn-secondary" onClick={onClose}>
-          Schließen
+          {t('importModal.close')}
         </button>
       </div>
     </div>

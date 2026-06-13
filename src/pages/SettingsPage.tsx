@@ -7,9 +7,11 @@ import {
   saveCalibration,
 } from '../db';
 import { AudioAnalyzer } from '../audio/analyzer';
+import { fmtDateTime, useT } from '../i18n';
 import type { AppSettings, Calibration } from '../types';
 
 export function SettingsPage() {
+  const { t } = useT();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [calibration, setCalibration] = useState<Calibration | null>(null);
   const [refDbSpl, setRefDbSpl] = useState('94');
@@ -76,14 +78,14 @@ export function SettingsPage() {
     setMeasuredDbfs(null);
   }
 
-  if (!settings) return <p>Lade…</p>;
+  if (!settings) return <p>{t('common.loading')}</p>;
 
   return (
     <>
       <div className="card">
-        <h2>Standardeinstellungen</h2>
+        <h2>{t('settings.defaults')}</h2>
         <div className="form-group">
-          <label>Standard-Frequenz (Hz)</label>
+          <label>{t('settings.defaultFreq')}</label>
           <input
             type="number"
             min={10000}
@@ -99,7 +101,7 @@ export function SettingsPage() {
           />
         </div>
         <div className="form-group">
-          <label>Standard Frequenz-Streuung (± Hz)</label>
+          <label>{t('settings.defaultSpread')}</label>
           <input
             type="number"
             min={0}
@@ -113,12 +115,10 @@ export function SettingsPage() {
               })
             }
           />
-          <p className="hint">
-            Signal wird im Bereich Zielfrequenz ± Streuung gemessen (z. B. ±50 Hz).
-          </p>
+          <p className="hint">{t('settings.spreadHint')}</p>
         </div>
         <div className="form-group">
-          <label>SNR-Schwelle für „Bestanden“ (dB)</label>
+          <label>{t('settings.passSnr')}</label>
           <input
             type="number"
             min={0}
@@ -134,7 +134,7 @@ export function SettingsPage() {
           />
         </div>
         <div className="form-group">
-          <label>Standard-Messdauer (Sekunden)</label>
+          <label>{t('settings.defaultDuration')}</label>
           <input
             type="number"
             min={2}
@@ -149,20 +149,16 @@ export function SettingsPage() {
           />
         </div>
         <button type="button" className="btn btn-primary" onClick={() => void saveSettings()}>
-          Einstellungen speichern
+          {t('settings.saveSettings')}
         </button>
-        {saved && <p className="hint" style={{ color: 'var(--success)' }}>Gespeichert!</p>}
+        {saved && <p className="hint" style={{ color: 'var(--success)' }}>{t('settings.saved')}</p>}
       </div>
 
       <div className="card">
-        <h2>SPL-Kalibrierung (optional)</h2>
-        <p className="hint">
-          Für geschätzte dB-SPL-Werte: Spielen Sie einen Ton mit bekannter
-          Lautstärke ab (z.B. 94 dB SPL Kalibrator) und messen Sie den
-          Referenzpegel.
-        </p>
+        <h2>{t('settings.splTitle')}</h2>
+        <p className="hint">{t('settings.splHint')}</p>
         <div className="form-group">
-          <label>Bekannter Referenzpegel (dB SPL)</label>
+          <label>{t('settings.refLevel')}</label>
           <input
             type="number"
             value={refDbSpl}
@@ -175,16 +171,17 @@ export function SettingsPage() {
           disabled={measuring}
           onClick={() => void runCalibrationMeasure()}
         >
-          {measuring ? 'Messe…' : 'Referenzmessung starten (3 s)'}
+          {measuring ? t('settings.measuring') : t('settings.startRef')}
         </button>
         {measuredDbfs !== null && (
-          <p>Gemessener Referenzpegel: {measuredDbfs.toFixed(1)} dBFS</p>
+          <p>{t('settings.measuredRef', { value: measuredDbfs.toFixed(1) })}</p>
         )}
         {calibration && (
           <p className="hint">
-            Kalibrierung aktiv seit{' '}
-            {new Date(calibration.updatedAt).toLocaleString('de-DE')} (Offset:{' '}
-            {calibration.offsetDbSpl.toFixed(1)} dB)
+            {t('settings.calActiveSince', {
+              date: fmtDateTime(calibration.updatedAt),
+              offset: calibration.offsetDbSpl.toFixed(1),
+            })}
           </p>
         )}
         <div className="btn-row">
@@ -194,7 +191,7 @@ export function SettingsPage() {
             disabled={measuredDbfs === null}
             onClick={() => void saveCalibrationData()}
           >
-            Kalibrierung speichern
+            {t('settings.saveCal')}
           </button>
           {calibration && (
             <button
@@ -202,19 +199,19 @@ export function SettingsPage() {
               className="btn btn-danger"
               onClick={() => void removeCalibration()}
             >
-              Kalibrierung löschen
+              {t('settings.deleteCal')}
             </button>
           )}
         </div>
       </div>
 
       <div className="card">
-        <h2>Geräte-Hinweise</h2>
+        <h2>{t('settings.deviceNotes')}</h2>
         <ul className="hint" style={{ paddingLeft: '1.2rem' }}>
-          <li>Viele Smartphone-Mikrofone filtern oberhalb von 18–20 kHz.</li>
-          <li>dB SPL ohne Kalibriermikrofon ist nur näherungsweise.</li>
-          <li>iOS: Mikrofon nur bei aktiver App verfügbar.</li>
-          <li>Die App funktioniert offline nach dem ersten Laden.</li>
+          <li>{t('settings.note1')}</li>
+          <li>{t('settings.note2')}</li>
+          <li>{t('settings.note3')}</li>
+          <li>{t('settings.note4')}</li>
         </ul>
       </div>
     </>

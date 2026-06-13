@@ -5,8 +5,10 @@ import { downloadDocx } from '../export/docx';
 import { downloadPdf } from '../export/pdf';
 import { downloadXlsx } from '../export/xlsx';
 import { useSession } from '../hooks/useSession';
+import { useT } from '../i18n';
 
 export function ExportPage() {
+  const { t } = useT();
   const { session } = useSession();
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
@@ -17,28 +19,26 @@ export function ExportPage() {
     setLoading(type);
     try {
       const data = await buildExportData(session.id);
+      const suffix = t('export.filenameSuffix');
       const base = session.name.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, '_');
-      if (type === 'pdf') downloadPdf(data, `${base}_protokoll.pdf`);
-      if (type === 'csv') downloadCsv(data, `${base}_protokoll.csv`);
-      if (type === 'xlsx') downloadXlsx(data, `${base}_protokoll.xlsx`);
-      if (type === 'docx') await downloadDocx(data, `${base}_protokoll.docx`);
+      if (type === 'pdf') downloadPdf(data, `${base}_${suffix}.pdf`);
+      if (type === 'csv') downloadCsv(data, `${base}_${suffix}.csv`);
+      if (type === 'xlsx') downloadXlsx(data, `${base}_${suffix}.xlsx`);
+      if (type === 'docx') await downloadDocx(data, `${base}_${suffix}.docx`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Export fehlgeschlagen');
+      setError(e instanceof Error ? e.message : t('export.failed'));
     } finally {
       setLoading('');
     }
   }
 
-  if (!session) return <p>Lade…</p>;
+  if (!session) return <p>{t('common.loading')}</p>;
 
   return (
     <>
       <div className="card">
-        <h2>Export – {session.name}</h2>
-        <p className="hint">
-          Exportiert alle Messungen der aktiven Sitzung mit Lautsprecherdaten,
-          Pegelwerten und Status.
-        </p>
+        <h2>{t('export.title', { name: session.name })}</h2>
+        <p className="hint">{t('export.hint')}</p>
         {error && <p style={{ color: 'var(--danger)' }}>{error}</p>}
         <button
           type="button"
@@ -46,7 +46,7 @@ export function ExportPage() {
           disabled={!!loading}
           onClick={() => void handleExport('pdf')}
         >
-          {loading === 'pdf' ? 'Erstelle PDF…' : 'Als PDF exportieren'}
+          {loading === 'pdf' ? t('export.creatingPdf') : t('export.asPdf')}
         </button>
         <button
           type="button"
@@ -54,7 +54,7 @@ export function ExportPage() {
           disabled={!!loading}
           onClick={() => void handleExport('docx')}
         >
-          {loading === 'docx' ? 'Erstelle Word…' : 'Als Word (.docx) exportieren'}
+          {loading === 'docx' ? t('export.creatingWord') : t('export.asWord')}
         </button>
         <button
           type="button"
@@ -62,7 +62,7 @@ export function ExportPage() {
           disabled={!!loading}
           onClick={() => void handleExport('xlsx')}
         >
-          {loading === 'xlsx' ? 'Erstelle Excel…' : 'Als Excel (.xlsx) exportieren'}
+          {loading === 'xlsx' ? t('export.creatingExcel') : t('export.asExcel')}
         </button>
         <button
           type="button"
@@ -70,7 +70,7 @@ export function ExportPage() {
           disabled={!!loading}
           onClick={() => void handleExport('csv')}
         >
-          {loading === 'csv' ? 'Erstelle CSV…' : 'Als CSV exportieren'}
+          {loading === 'csv' ? t('export.creatingCsv') : t('export.asCsv')}
         </button>
       </div>
     </>
