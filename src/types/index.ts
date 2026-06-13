@@ -9,6 +9,7 @@ export interface SessionSettings {
 
 export interface Speaker {
   id?: number;
+  sessionId: number;
   name: string;
   location: string;
   note?: string;

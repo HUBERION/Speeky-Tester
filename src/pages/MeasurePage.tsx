@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   addMeasurement,
-  getAllSpeakers,
   getCalibration,
   getMeasurementsForSession,
+  getSpeakersForSession,
 } from '../db';
 import {
   applySplCalibration,
@@ -49,7 +49,7 @@ export function MeasurePage() {
   const load = useCallback(async () => {
     if (!session?.id) return;
     const [allSpeakers, measurements] = await Promise.all([
-      getAllSpeakers(),
+      getSpeakersForSession(session.id),
       getMeasurementsForSession(session.id),
     ]);
     setSpeakers(allSpeakers);

@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   addSpeaker,
   deleteSpeaker,
-  getAllSpeakers,
+  getSpeakersForSession,
   updateSpeaker,
 } from '../db';
+import { useSession } from '../hooks/useSession';
 import type { Speaker } from '../types';
 import { ImportModal } from '../components/ImportModal';
 
 export function SpeakersPage() {
+  const { session } = useSession();
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -18,8 +20,9 @@ export function SpeakersPage() {
   const [note, setNote] = useState('');
 
   const load = useCallback(async () => {
-    setSpeakers(await getAllSpeakers());
-  }, []);
+    if (!session?.id) return;
+    setSpeakers(await getSpeakersForSession(session.id));
+  }, [session?.id]);
 
   useEffect(() => {
     void load();
@@ -42,7 +45,7 @@ export function SpeakersPage() {
   }
 
   async function handleSave() {
-    if (!name.trim()) return;
+    if (!name.trim() || !session?.id) return;
     if (editing?.id) {
       await updateSpeaker({
         ...editing,
@@ -52,6 +55,7 @@ export function SpeakersPage() {
       });
     } else {
       await addSpeaker({
+        sessionId: session.id,
         name: name.trim(),
         location: location.trim(),
         note: note.trim() || undefined,
@@ -63,6 +67,7 @@ export function SpeakersPage() {
   }
 
   async function handleCopy(speaker: Speaker) {
+    if (!session?.id) return;
     const baseName = speaker.name.replace(/\s*\(Kopie(?:\s*\d+)?\)\s*$/, '');
     const existingNames = speakers
       .map((s) => s.name)
@@ -74,6 +79,7 @@ export function SpeakersPage() {
       copyName = `${baseName} (Kopie ${i})`;
     }
     await addSpeaker({
+      sessionId: session.id,
       name: copyName,
       location: speaker.location,
       note: speaker.note,
@@ -88,8 +94,18 @@ export function SpeakersPage() {
     await load();
   }
 
+  if (!session) return <p>Lade Sitzung…</p>;
+
   return (
     <>
+      <div className="card">
+        <h2>Lautsprecher der Sitzung</h2>
+        <p className="hint">
+          Lautsprecher gehören zur Sitzung <strong>{session.name}</strong>. Beim
+          Anlegen einer neuen Sitzung kann diese Liste übernommen werden.
+        </p>
+      </div>
+
       <div className="btn-row">
         <button
           type="button"
@@ -191,6 +207,7 @@ export function SpeakersPage() {
 
       {showImport && (
         <ImportModal
+          sessionId={session.id!}
           onClose={() => setShowImport(false)}
           onImported={() => {
             setShowImport(false);

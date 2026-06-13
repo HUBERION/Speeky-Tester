@@ -37,6 +37,37 @@ class SpeekyDatabase extends Dexie {
       calibration: '++id',
       appSettings: '++id',
     });
+    // v2: Lautsprecher gehören jetzt zu genau einer Sitzung (sessionId).
+    this.version(2)
+      .stores({
+        speakers: '++id, sessionId, name, location, createdAt, [sessionId+name]',
+      })
+      .upgrade(async (tx) => {
+        const sessionsTable = tx.table('sessions');
+        const sessions = await sessionsTable.toArray();
+        const rawActive = localStorage.getItem('activeSessionId');
+        const activeId = rawActive ? Number(rawActive) : null;
+        let targetId: number | undefined;
+        if (activeId && sessions.some((s) => s.id === activeId)) {
+          targetId = activeId;
+        } else if (sessions.length > 0) {
+          targetId = sessions[0].id;
+        }
+        if (targetId == null) {
+          targetId = (await sessionsTable.add({
+            name: `Migriert ${new Date().toLocaleDateString('de-DE')}`,
+            createdAt: new Date().toISOString(),
+            settings: { ...DEFAULT_SESSION_SETTINGS },
+          })) as number;
+        }
+        // Bestehende globale Lautsprecher der aktiven/ersten Sitzung zuordnen.
+        await tx
+          .table('speakers')
+          .toCollection()
+          .modify((s: { sessionId?: number }) => {
+            if (s.sessionId == null) s.sessionId = targetId;
+          });
+      });
   }
 }
 
@@ -80,8 +111,29 @@ export async function clearCalibration(): Promise<void> {
   await db.calibration.clear();
 }
 
-export async function getAllSpeakers(): Promise<Speaker[]> {
-  return db.speakers.orderBy('name').toArray();
+export async function getSpeakersForSession(
+  sessionId: number,
+): Promise<Speaker[]> {
+  return db.speakers.where('sessionId').equals(sessionId).sortBy('name');
+}
+
+export async function copySpeakersToSession(
+  fromSessionId: number,
+  toSessionId: number,
+): Promise<number> {
+  const speakers = await getSpeakersForSession(fromSessionId);
+  if (speakers.length === 0) return 0;
+  const now = new Date().toISOString();
+  await db.speakers.bulkAdd(
+    speakers.map((s) => ({
+      sessionId: toSessionId,
+      name: s.name,
+      location: s.location,
+      note: s.note,
+      createdAt: now,
+    })),
+  );
+  return speakers.length;
 }
 
 export async function addSpeaker(speaker: Omit<Speaker, 'id'>): Promise<number> {
@@ -112,9 +164,12 @@ export async function getSession(id: number): Promise<TestSession | undefined> {
   return session ? withSessionDefaults(session) : undefined;
 }
 
-export async function createSession(name: string): Promise<number> {
+export async function createSession(
+  name: string,
+  copyFromSessionId?: number,
+): Promise<number> {
   const settings = await getAppSettings();
-  return (await db.sessions.add({
+  const id = (await db.sessions.add({
     name,
     createdAt: new Date().toISOString(),
     settings: {
@@ -124,6 +179,10 @@ export async function createSession(name: string): Promise<number> {
       defaultDurationMs: settings.defaultDurationMs,
     },
   })) as number;
+  if (copyFromSessionId != null) {
+    await copySpeakersToSession(copyFromSessionId, id);
+  }
+  return id;
 }
 
 export async function updateSession(session: TestSession): Promise<void> {
@@ -132,6 +191,7 @@ export async function updateSession(session: TestSession): Promise<void> {
 
 export async function deleteSession(id: number): Promise<void> {
   await db.measurements.where('sessionId').equals(id).delete();
+  await db.speakers.where('sessionId').equals(id).delete();
   await db.sessions.delete(id);
 }
 

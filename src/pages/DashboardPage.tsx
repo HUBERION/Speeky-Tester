@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   createSession,
+  deleteSession,
   getAllSessions,
-  getAllSpeakers,
   getMeasurementsForSession,
+  getSpeakersForSession,
   setActiveSessionId,
 } from '../db';
 import { useSession } from '../hooks/useSession';
@@ -20,12 +21,13 @@ export function DashboardPage() {
   });
   const [sessions, setSessions] = useState<Awaited<ReturnType<typeof getAllSessions>>>([]);
   const [newSessionName, setNewSessionName] = useState('');
+  const [copyFromId, setCopyFromId] = useState<number | ''>('');
 
   useEffect(() => {
     async function load() {
       if (!session?.id) return;
       const [speakers, measurements, allSessions] = await Promise.all([
-        getAllSpeakers(),
+        getSpeakersForSession(session.id),
         getMeasurementsForSession(session.id),
         getAllSessions(),
       ]);
@@ -46,10 +48,34 @@ export function DashboardPage() {
     const name =
       newSessionName.trim() ||
       `Messung ${new Date().toLocaleDateString('de-DE')}`;
-    const id = await createSession(name);
+    const id = await createSession(
+      name,
+      copyFromId === '' ? undefined : copyFromId,
+    );
     await setActiveSessionId(id);
     setNewSessionName('');
+    setCopyFromId('');
     await refresh();
+  }
+
+  async function handleDeleteSession(id: number) {
+    const target = sessions.find((s) => s.id === id);
+    if (
+      !confirm(
+        `Sitzung „${target?.name ?? ''}" inklusive aller Lautsprecher und Messungen löschen?`,
+      )
+    ) {
+      return;
+    }
+    await deleteSession(id);
+    if (id === session?.id) {
+      // Aktive Sitzung gelöscht: nächste übernehmen bzw. neue Default anlegen.
+      await setActiveSessionId(null);
+      await refresh();
+    } else {
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+      setCopyFromId((prev) => (prev === id ? '' : prev));
+    }
   }
 
   return (
@@ -110,25 +136,64 @@ export function DashboardPage() {
             onChange={(e) => setNewSessionName(e.target.value)}
           />
         </div>
+        {sessions.length > 0 && (
+          <div className="form-group">
+            <label>Lautsprecher übernehmen von</label>
+            <select
+              value={copyFromId}
+              onChange={(e) =>
+                setCopyFromId(e.target.value ? Number(e.target.value) : '')
+              }
+            >
+              <option value="">– keine (leer starten) –</option>
+              {sessions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <p className="hint">
+              Kopiert die Lautsprecherliste der gewählten Sitzung in die neue
+              Sitzung. Messergebnisse werden nicht übernommen.
+            </p>
+          </div>
+        )}
         <button type="button" className="btn btn-secondary" onClick={() => void handleNewSession()}>
           Neue Testsitzung erstellen
         </button>
       </div>
 
-      {sessions.length > 1 && (
+      {sessions.length > 0 && (
         <div className="card">
-          <h3>Sitzungen wechseln</h3>
+          <h3>Sitzungen verwalten</h3>
           {sessions.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className="btn btn-secondary"
-              disabled={s.id === session?.id}
-              onClick={() => void setActiveSessionId(s.id!).then(refresh)}
-            >
-              {s.name}
-              {s.id === session?.id ? ' (aktiv)' : ''}
-            </button>
+            <div key={s.id} className="list-item">
+              <div className="list-item-info">
+                <strong>
+                  {s.name}
+                  {s.id === session?.id ? ' (aktiv)' : ''}
+                </strong>
+              </div>
+              <div className="btn-row" style={{ width: 'auto' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ width: 'auto', margin: 0, padding: '0.5rem 0.75rem' }}
+                  disabled={s.id === session?.id}
+                  onClick={() => void setActiveSessionId(s.id!).then(refresh)}
+                >
+                  Wechseln
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  style={{ width: 'auto', margin: 0, padding: '0.5rem 0.75rem' }}
+                  onClick={() => void handleDeleteSession(s.id!)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}
