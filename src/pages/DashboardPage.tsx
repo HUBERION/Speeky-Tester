@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   createSession,
+  deleteSession,
   getAllSessions,
   getMeasurementsForSession,
   getSpeakersForSession,
@@ -55,6 +56,26 @@ export function DashboardPage() {
     setNewSessionName('');
     setCopyFromId('');
     await refresh();
+  }
+
+  async function handleDeleteSession(id: number) {
+    const target = sessions.find((s) => s.id === id);
+    if (
+      !confirm(
+        `Sitzung „${target?.name ?? ''}" inklusive aller Lautsprecher und Messungen löschen?`,
+      )
+    ) {
+      return;
+    }
+    await deleteSession(id);
+    if (id === session?.id) {
+      // Aktive Sitzung gelöscht: nächste übernehmen bzw. neue Default anlegen.
+      await setActiveSessionId(null);
+      await refresh();
+    } else {
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+      setCopyFromId((prev) => (prev === id ? '' : prev));
+    }
   }
 
   return (
@@ -142,20 +163,37 @@ export function DashboardPage() {
         </button>
       </div>
 
-      {sessions.length > 1 && (
+      {sessions.length > 0 && (
         <div className="card">
-          <h3>Sitzungen wechseln</h3>
+          <h3>Sitzungen verwalten</h3>
           {sessions.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className="btn btn-secondary"
-              disabled={s.id === session?.id}
-              onClick={() => void setActiveSessionId(s.id!).then(refresh)}
-            >
-              {s.name}
-              {s.id === session?.id ? ' (aktiv)' : ''}
-            </button>
+            <div key={s.id} className="list-item">
+              <div className="list-item-info">
+                <strong>
+                  {s.name}
+                  {s.id === session?.id ? ' (aktiv)' : ''}
+                </strong>
+              </div>
+              <div className="btn-row" style={{ width: 'auto' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ width: 'auto', margin: 0, padding: '0.5rem 0.75rem' }}
+                  disabled={s.id === session?.id}
+                  onClick={() => void setActiveSessionId(s.id!).then(refresh)}
+                >
+                  Wechseln
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  style={{ width: 'auto', margin: 0, padding: '0.5rem 0.75rem' }}
+                  onClick={() => void handleDeleteSession(s.id!)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}
