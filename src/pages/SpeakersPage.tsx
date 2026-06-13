@@ -63,8 +63,18 @@ export function SpeakersPage() {
   }
 
   async function handleCopy(speaker: Speaker) {
+    const baseName = speaker.name.replace(/\s*\(Kopie(?:\s*\d+)?\)\s*$/, '');
+    const existingNames = speakers
+      .map((s) => s.name)
+      .filter((n) => n.startsWith(baseName));
+    let copyName = `${baseName} (Kopie)`;
+    if (existingNames.includes(copyName)) {
+      let i = 2;
+      while (existingNames.includes(`${baseName} (Kopie ${i})`)) i++;
+      copyName = `${baseName} (Kopie ${i})`;
+    }
     await addSpeaker({
-      name: `${speaker.name} (Kopie)`,
+      name: copyName,
       location: speaker.location,
       note: speaker.note,
       createdAt: new Date().toISOString(),
@@ -150,6 +160,7 @@ export function SpeakersPage() {
                   className="btn btn-secondary"
                   style={{ width: 'auto', margin: 0, padding: '0.5rem' }}
                   title="Kopieren"
+                  aria-label="Kopieren"
                   onClick={() => void handleCopy(s)}
                 >
                   ⧉
