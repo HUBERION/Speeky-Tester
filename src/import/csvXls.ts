@@ -92,6 +92,34 @@ export function guessColumnMapping(headers: string[]): ColumnMapping {
   };
 }
 
+const DEMO_ROWS = [
+  { Name: 'LS-001', Standort: 'Halle A – Eingang', Notiz: 'Deckenmontage' },
+  { Name: 'LS-002', Standort: 'Halle A – Mitte', Notiz: '' },
+  { Name: 'LS-003', Standort: 'Halle B – Bühne', Notiz: 'Wandmontage links' },
+  { Name: 'LS-004', Standort: 'Foyer', Notiz: 'Über Empfang' },
+  { Name: 'LS-005', Standort: 'Treppenhaus', Notiz: '' },
+];
+
+export function downloadDemoCsv(): void {
+  const header = 'Name;Standort;Notiz';
+  const lines = DEMO_ROWS.map((r) => `${r.Name};${r.Standort};${r.Notiz}`);
+  const content = '\uFEFF' + [header, ...lines].join('\n');
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lautsprecher_vorlage.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function downloadDemoXlsx(): void {
+  const ws = XLSX.utils.json_to_sheet(DEMO_ROWS);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Lautsprecher');
+  XLSX.writeFile(wb, 'lautsprecher_vorlage.xlsx');
+}
+
 export function findDuplicateWarnings(
   existing: Speaker[],
   incoming: Omit<Speaker, 'id'>[],

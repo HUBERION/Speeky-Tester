@@ -62,6 +62,16 @@ export function SpeakersPage() {
     await load();
   }
 
+  async function handleCopy(speaker: Speaker) {
+    await addSpeaker({
+      name: `${speaker.name} (Kopie)`,
+      location: speaker.location,
+      note: speaker.note,
+      createdAt: new Date().toISOString(),
+    });
+    await load();
+  }
+
   async function handleDelete(id: number) {
     if (!confirm('Lautsprecher wirklich löschen?')) return;
     await deleteSpeaker(id);
@@ -139,6 +149,16 @@ export function SpeakersPage() {
                   type="button"
                   className="btn btn-secondary"
                   style={{ width: 'auto', margin: 0, padding: '0.5rem' }}
+                  title="Kopieren"
+                  onClick={() => void handleCopy(s)}
+                >
+                  ⧉
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ width: 'auto', margin: 0, padding: '0.5rem' }}
+                  title="Bearbeiten"
                   onClick={() => startEdit(s)}
                 >
                   ✎
@@ -147,6 +167,7 @@ export function SpeakersPage() {
                   type="button"
                   className="btn btn-danger"
                   style={{ width: 'auto', margin: 0, padding: '0.5rem' }}
+                  title="Löschen"
                   onClick={() => void handleDelete(s.id!)}
                 >
                   ✕

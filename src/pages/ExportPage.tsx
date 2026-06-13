@@ -3,6 +3,7 @@ import { buildExportData } from '../export/buildExportData';
 import { downloadCsv } from '../export/csv';
 import { downloadDocx } from '../export/docx';
 import { downloadPdf } from '../export/pdf';
+import { downloadXlsx } from '../export/xlsx';
 import { useSession } from '../hooks/useSession';
 
 export function ExportPage() {
@@ -10,7 +11,7 @@ export function ExportPage() {
   const [loading, setLoading] = useState('');
   const [error, setError] = useState('');
 
-  async function handleExport(type: 'pdf' | 'docx' | 'csv') {
+  async function handleExport(type: 'pdf' | 'docx' | 'csv' | 'xlsx') {
     if (!session?.id) return;
     setError('');
     setLoading(type);
@@ -19,6 +20,7 @@ export function ExportPage() {
       const base = session.name.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, '_');
       if (type === 'pdf') downloadPdf(data, `${base}_protokoll.pdf`);
       if (type === 'csv') downloadCsv(data, `${base}_protokoll.csv`);
+      if (type === 'xlsx') downloadXlsx(data, `${base}_protokoll.xlsx`);
       if (type === 'docx') await downloadDocx(data, `${base}_protokoll.docx`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Export fehlgeschlagen');
@@ -53,6 +55,14 @@ export function ExportPage() {
           onClick={() => void handleExport('docx')}
         >
           {loading === 'docx' ? 'Erstelle Word…' : 'Als Word (.docx) exportieren'}
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          disabled={!!loading}
+          onClick={() => void handleExport('xlsx')}
+        >
+          {loading === 'xlsx' ? 'Erstelle Excel…' : 'Als Excel (.xlsx) exportieren'}
         </button>
         <button
           type="button"

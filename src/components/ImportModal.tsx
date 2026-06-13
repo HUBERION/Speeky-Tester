@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { addSpeaker, getAllSpeakers } from '../db';
 import {
+  downloadDemoCsv,
+  downloadDemoXlsx,
   findDuplicateWarnings,
   guessColumnMapping,
   mapRowsToSpeakers,
@@ -69,8 +71,24 @@ export function ImportModal({ onClose, onImported }: Props) {
               }}
             />
             <p className="hint">
-              Erwartete Spalten: name, location, note (optional)
+              Erwartete Spalten: Name, Standort, Notiz (optional)
             </p>
+            <div className="btn-row" style={{ marginTop: '0.75rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => downloadDemoCsv()}
+              >
+                Vorlage CSV
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => downloadDemoXlsx()}
+              >
+                Vorlage Excel
+              </button>
+            </div>
           </div>
         )}
 
