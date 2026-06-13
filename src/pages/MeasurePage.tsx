@@ -13,18 +13,14 @@ import {
   getDeviceInfo,
 } from '../audio/analyzer';
 import { useSession } from '../hooks/useSession';
+import { localeFor, useT } from '../i18n';
 import type { LiveFrame, MeasurementResult, Speaker } from '../types';
 
 type Phase = 'select' | 'countdown' | 'measuring' | 'result';
 type MeasureMode = 'list' | 'adhoc';
 
-const statusLabel = {
-  pass: 'Bestanden',
-  fail: 'Nicht bestanden',
-  inconclusive: 'Unklar',
-};
-
 export function MeasurePage() {
+  const { t } = useT();
   const { session } = useSession();
   const [searchParams] = useSearchParams();
   const analyzerRef = useRef<AudioAnalyzer | null>(null);
@@ -125,11 +121,7 @@ export function MeasurePage() {
       setResult({ ...measurement, levelDbSpl });
       setPhase('result');
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : 'Mikrofon-Zugriff fehlgeschlagen. Bitte Berechtigung erteilen.',
-      );
+      setError(e instanceof Error ? e.message : t('measure.micError'));
       setPhase('select');
     }
   }
@@ -158,7 +150,12 @@ export function MeasurePage() {
     if (mode === 'adhoc') {
       const label =
         adhocLabel.trim() ||
-        `Ad-hoc ${new Date().toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+        t('measure.adhocDefaultLabel', {
+          time: new Date().toLocaleTimeString(localeFor(), {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        });
       await addMeasurement({
         ...base,
         adhocLabel: label,
@@ -183,7 +180,7 @@ export function MeasurePage() {
   }
 
   if (!session) {
-    return <p>Lade Sitzung…</p>;
+    return <p>{t('common.loadingSession')}</p>;
   }
 
   return (
@@ -195,7 +192,7 @@ export function MeasurePage() {
       )}
 
       <div className="card">
-        <h2>Messmodus</h2>
+        <h2>{t('measure.mode')}</h2>
         <div className="btn-row">
           <button
             type="button"
@@ -203,7 +200,7 @@ export function MeasurePage() {
             onClick={() => setMode('list')}
             disabled={phase === 'measuring' || phase === 'countdown'}
           >
-            Aus Liste
+            {t('measure.fromList')}
           </button>
           <button
             type="button"
@@ -211,31 +208,29 @@ export function MeasurePage() {
             onClick={() => setMode('adhoc')}
             disabled={phase === 'measuring' || phase === 'countdown'}
           >
-            Ad-hoc
+            {t('measure.adhoc')}
           </button>
         </div>
         <p className="hint">
-          {mode === 'adhoc'
-            ? 'Schnellmessung ohne Lautsprecher aus der Liste – z. B. Stichprobe oder Test vor Ort.'
-            : 'Messung einem Lautsprecher aus der Liste zuordnen.'}
+          {mode === 'adhoc' ? t('measure.adhocHint') : t('measure.listHint')}
         </p>
       </div>
 
       {mode === 'list' ? (
         <div className="card">
-          <h2>Lautsprecher wählen</h2>
+          <h2>{t('measure.chooseSpeaker')}</h2>
           {speakers.length === 0 ? (
             <div className="empty-state">
-              <p>Keine Lautsprecher in der Liste.</p>
+              <p>{t('measure.noSpeakers')}</p>
               <Link to="/speakers" className="btn btn-secondary">
-                Lautsprecher hinzufügen
+                {t('measure.addSpeakers')}
               </Link>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={() => setMode('adhoc')}
               >
-                Stattdessen Ad-hoc messen
+                {t('measure.adhocInstead')}
               </button>
             </div>
           ) : (
@@ -256,8 +251,11 @@ export function MeasurePage() {
               </div>
               {selected && (
                 <p className="hint">
-                  {selected.note || 'Keine Notiz'} · Fortschritt:{' '}
-                  {testedIds.size}/{speakers.length}
+                  {selected.note || t('measure.noNote')} ·{' '}
+                  {t('measure.progress', {
+                    tested: testedIds.size,
+                    total: speakers.length,
+                  })}
                 </p>
               )}
             </>
@@ -265,36 +263,33 @@ export function MeasurePage() {
         </div>
       ) : (
         <div className="card">
-          <h2>Ad-hoc Messung</h2>
+          <h2>{t('measure.adhocTitle')}</h2>
           <div className="form-group">
-            <label>Bezeichnung (optional)</label>
+            <label>{t('measure.labelOptional')}</label>
             <input
-              placeholder="z. B. Stichprobe Flur, Test PA-Kanal 3"
+              placeholder={t('measure.labelPlaceholder')}
               value={adhocLabel}
               onChange={(e) => setAdhocLabel(e.target.value)}
               disabled={phase === 'measuring' || phase === 'countdown'}
             />
           </div>
           <div className="form-group">
-            <label>Standort (optional)</label>
+            <label>{t('measure.locationOptional')}</label>
             <input
-              placeholder="z. B. Technikraum, EG"
+              placeholder={t('measure.locationPlaceholder')}
               value={adhocLocation}
               onChange={(e) => setAdhocLocation(e.target.value)}
               disabled={phase === 'measuring' || phase === 'countdown'}
             />
           </div>
-          <p className="hint">
-            Ohne Bezeichnung wird automatisch ein Zeitstempel verwendet. Jede
-            Ad-hoc-Messung wird als eigener Eintrag gespeichert.
-          </p>
+          <p className="hint">{t('measure.adhocNote')}</p>
         </div>
       )}
 
       <div className="card">
-        <h2>Messparameter</h2>
+        <h2>{t('measure.params')}</h2>
         <div className="form-group">
-          <label>Zielfrequenz (Hz)</label>
+          <label>{t('measure.targetFreq')}</label>
           <input
             type="number"
             min={10000}
@@ -304,10 +299,10 @@ export function MeasurePage() {
             onChange={(e) => setFrequency(Number(e.target.value))}
             disabled={phase === 'measuring' || phase === 'countdown'}
           />
-          <p className="hint">Empfohlen: 17.000–20.000 Hz</p>
+          <p className="hint">{t('measure.recommended')}</p>
         </div>
         <div className="form-group">
-          <label>Frequenz-Streuung (± Hz)</label>
+          <label>{t('measure.freqSpread')}</label>
           <input
             type="number"
             min={0}
@@ -318,11 +313,13 @@ export function MeasurePage() {
             disabled={phase === 'measuring' || phase === 'countdown'}
           />
           <p className="hint">
-            Messbereich: {formatFrequencyBand(frequency, frequencyTolerance)}
+            {t('measure.range', {
+              band: formatFrequencyBand(frequency, frequencyTolerance),
+            })}
           </p>
         </div>
         <div className="form-group">
-          <label>Messdauer (Sekunden)</label>
+          <label>{t('measure.duration')}</label>
           <input
             type="number"
             min={2}
@@ -336,31 +333,27 @@ export function MeasurePage() {
 
       {phase === 'select' && canMeasure && (
         <div className="card">
-          <p className="hint">
-            Starten Sie den <strong>externen Testton</strong> an der PA-Anlage.
-            Tippen Sie dann auf „Messung vorbereiten“ – nach dem Countdown beginnt
-            die Aufnahme.
-          </p>
+          <p className="hint">{t('measure.prepareHint')}</p>
           <button
             type="button"
             className="btn btn-primary"
             onClick={() => void startCountdown()}
           >
-            Messung vorbereiten
+            {t('measure.prepare')}
           </button>
         </div>
       )}
 
       {phase === 'countdown' && (
         <div className="card">
-          <p style={{ textAlign: 'center' }}>Externen Ton jetzt starten!</p>
+          <p style={{ textAlign: 'center' }}>{t('measure.startToneNow')}</p>
           <div className="countdown">{countdown}</div>
         </div>
       )}
 
       {phase === 'measuring' && live && (
         <div className="card">
-          <h2>Messung läuft…</h2>
+          <h2>{t('measure.running')}</h2>
           <div className="spectrum-bar">
             {live.spectrum.map((v, i) => (
               <span key={i} style={{ height: `${Math.max(2, v * 100)}%` }} />
@@ -368,20 +361,20 @@ export function MeasurePage() {
           </div>
           <div className="live-values">
             <div>
-              <span>Pegel (dBFS)</span>
+              <span>{t('measure.level')}</span>
               <strong>{live.levelDbfs.toFixed(1)}</strong>
             </div>
             <div>
-              <span>SNR (dB)</span>
+              <span>{t('measure.snr')}</span>
               <strong>{live.snrDb.toFixed(1)}</strong>
             </div>
             <div>
-              <span>Rauschboden</span>
+              <span>{t('measure.noiseFloor')}</span>
               <strong>{live.noiseFloorDbfs.toFixed(1)}</strong>
             </div>
             <div>
-              <span>Erkannt</span>
-              <strong>{live.detected ? 'Ja' : 'Nein'}</strong>
+              <span>{t('measure.detected')}</span>
+              <strong>{live.detected ? t('common.yes') : t('common.no')}</strong>
             </div>
           </div>
         </div>
@@ -390,40 +383,44 @@ export function MeasurePage() {
       {phase === 'result' && result && (
         <div className="card">
           <div className={`result-box ${result.status}`}>
-            <h2>{statusLabel[result.status]}</h2>
-            <p>Ton erkannt: {result.detected ? 'Ja' : 'Nein'}</p>
+            <h2>{t(`status.${result.status}`)}</h2>
+            <p>
+              {t('measure.toneDetected', {
+                yesno: result.detected ? t('common.yes') : t('common.no'),
+              })}
+            </p>
           </div>
           <div className="live-values">
             <div>
-              <span>Pegel (dBFS)</span>
+              <span>{t('measure.level')}</span>
               <strong>{result.levelDbfs.toFixed(1)}</strong>
             </div>
             <div>
-              <span>SNR (dB)</span>
+              <span>{t('measure.snr')}</span>
               <strong>{result.snrDb.toFixed(1)}</strong>
             </div>
             <div>
-              <span>Peak (dBFS)</span>
+              <span>{t('measure.peak')}</span>
               <strong>{result.peakDbfs.toFixed(1)}</strong>
             </div>
             <div>
-              <span>Mittel (dBFS)</span>
+              <span>{t('measure.mean')}</span>
               <strong>{result.avgDbfs.toFixed(1)}</strong>
             </div>
             {result.levelDbSpl !== undefined && (
               <div>
-                <span>Pegel (dB SPL, geschätzt)</span>
+                <span>{t('measure.splEstimated')}</span>
                 <strong>{result.levelDbSpl.toFixed(1)}</strong>
               </div>
             )}
           </div>
           <div className="form-group">
-            <label>Notiz</label>
+            <label>{t('measure.note')}</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           <div className="btn-row">
             <button type="button" className="btn btn-primary" onClick={() => void saveResult()}>
-              Speichern
+              {t('common.save')}
             </button>
             <button
               type="button"
@@ -433,7 +430,7 @@ export function MeasurePage() {
                 setResult(null);
               }}
             >
-              Verwerfen
+              {t('measure.discard')}
             </button>
           </div>
         </div>

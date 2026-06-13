@@ -1,5 +1,6 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import { tGlobal } from '../i18n';
 import type { Speaker } from '../types';
 
 export interface ParsedRow {
@@ -19,7 +20,7 @@ export async function parseImportFile(file: File): Promise<ImportPreview> {
   if (ext === 'xls' || ext === 'xlsx') {
     return parseXls(file);
   }
-  throw new Error('Nicht unterstütztes Format. Bitte CSV oder XLS/XLSX verwenden.');
+  throw new Error(tGlobal('importModal.unsupported'));
 }
 
 async function parseCsv(file: File): Promise<ImportPreview> {
@@ -94,32 +95,40 @@ export function guessColumnMapping(headers: string[]): ColumnMapping {
   };
 }
 
-const DEMO_ROWS = [
-  { Name: 'LS-001', Standort: 'Halle A – Eingang', Notiz: 'Deckenmontage' },
-  { Name: 'LS-002', Standort: 'Halle A – Mitte', Notiz: '' },
-  { Name: 'LS-003', Standort: 'Halle B – Bühne', Notiz: 'Wandmontage links' },
-  { Name: 'LS-004', Standort: 'Foyer', Notiz: 'Über Empfang' },
-  { Name: 'LS-005', Standort: 'Treppenhaus', Notiz: '' },
+const DEMO_VALUES: [string, string, string][] = [
+  ['LS-001', 'Hall A – entrance', 'ceiling mount'],
+  ['LS-002', 'Hall A – center', ''],
+  ['LS-003', 'Hall B – stage', 'wall mount left'],
+  ['LS-004', 'Foyer', 'above reception'],
+  ['LS-005', 'Stairwell', ''],
 ];
 
+function demoHeaders(): [string, string, string] {
+  return [
+    tGlobal('doc.col.name'),
+    tGlobal('doc.col.location'),
+    tGlobal('doc.col.note'),
+  ];
+}
+
 export function downloadDemoCsv(): void {
-  const header = 'Name;Standort;Notiz';
-  const lines = DEMO_ROWS.map((r) => `${r.Name};${r.Standort};${r.Notiz}`);
+  const header = demoHeaders().join(';');
+  const lines = DEMO_VALUES.map((r) => r.join(';'));
   const content = '\uFEFF' + [header, ...lines].join('\n');
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'lautsprecher_vorlage.csv';
+  a.download = `${tGlobal('doc.demoFilename')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 export function downloadDemoXlsx(): void {
-  const ws = XLSX.utils.json_to_sheet(DEMO_ROWS);
+  const ws = XLSX.utils.aoa_to_sheet([demoHeaders(), ...DEMO_VALUES]);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Lautsprecher');
-  XLSX.writeFile(wb, 'lautsprecher_vorlage.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, tGlobal('speakers.heading'));
+  XLSX.writeFile(wb, `${tGlobal('doc.demoFilename')}.xlsx`);
 }
 
 export function findDuplicateWarnings(

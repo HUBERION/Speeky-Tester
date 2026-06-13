@@ -5,6 +5,7 @@ import {
   getSpeakersForSession,
 } from '../db';
 import { getDeviceInfo } from '../audio/analyzer';
+import { localeFor, tGlobal } from '../i18n';
 import { getMeasurementDisplay } from '../lib/measurementDisplay';
 import type { ExportData, ExportRow } from '../types';
 
@@ -12,7 +13,7 @@ const APP_VERSION = '1.0.0';
 
 export async function buildExportData(sessionId: number): Promise<ExportData> {
   const session = await getSession(sessionId);
-  if (!session) throw new Error('Sitzung nicht gefunden');
+  if (!session) throw new Error(tGlobal('export.sessionNotFound'));
   const [speakers, measurements, calibration] = await Promise.all([
     getSpeakersForSession(sessionId),
     getMeasurementsForSession(sessionId),
@@ -41,7 +42,7 @@ export async function buildExportData(sessionId: number): Promise<ExportData> {
   });
   return {
     sessionName: session.name,
-    exportDate: new Date().toLocaleString('de-DE'),
+    exportDate: new Date().toLocaleString(localeFor()),
     totalSpeakers: speakers.length,
     passCount: measurements.filter((m) => m.status === 'pass').length,
     failCount: measurements.filter((m) => m.status === 'fail').length,

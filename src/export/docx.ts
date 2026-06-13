@@ -9,13 +9,8 @@ import {
   TextRun,
   WidthType,
 } from 'docx';
+import { localeFor, tGlobal } from '../i18n';
 import type { ExportData } from '../types';
-
-const statusLabel: Record<string, string> = {
-  pass: 'Bestanden',
-  fail: 'Nicht bestanden',
-  inconclusive: 'Unklar',
-};
 
 function cell(text: string): TableCell {
   return new TableCell({
@@ -26,18 +21,18 @@ function cell(text: string): TableCell {
 export async function downloadDocx(data: ExportData, filename: string): Promise<void> {
   const headerRow = new TableRow({
     children: [
-      'Name',
-      'Standort',
-      'Hz',
-      '±Hz',
-      'Erkannt',
-      'dBFS',
-      'SNR',
-      'Peak',
-      'SPL',
-      'Status',
-      'Zeit',
-      'Notiz',
+      tGlobal('doc.col.name'),
+      tGlobal('doc.col.location'),
+      tGlobal('doc.col.hz'),
+      tGlobal('doc.col.tolHz'),
+      tGlobal('doc.col.detected'),
+      tGlobal('doc.col.dbfs'),
+      tGlobal('doc.col.snr'),
+      tGlobal('doc.col.peak'),
+      tGlobal('doc.col.spl'),
+      tGlobal('doc.col.status'),
+      tGlobal('doc.col.time'),
+      tGlobal('doc.col.note'),
     ].map((h) => cell(h)),
   });
 
@@ -49,13 +44,13 @@ export async function downloadDocx(data: ExportData, filename: string): Promise<
           r.location,
           String(r.frequencyHz),
           String(r.frequencyToleranceHz),
-          r.detected ? 'Ja' : 'Nein',
+          r.detected ? tGlobal('common.yes') : tGlobal('common.no'),
           r.levelDbfs.toFixed(1),
           r.snrDb.toFixed(1),
           r.peakDbfs.toFixed(1),
           r.levelDbSpl !== undefined ? r.levelDbSpl.toFixed(1) : '–',
-          statusLabel[r.status] ?? r.status,
-          new Date(r.timestamp).toLocaleString('de-DE'),
+          tGlobal(`status.${r.status}`),
+          new Date(r.timestamp).toLocaleString(localeFor()),
           r.notes,
         ].map((t) => cell(t)),
       }),
@@ -66,26 +61,26 @@ export async function downloadDocx(data: ExportData, filename: string): Promise<
       {
         children: [
           new Paragraph({
-            text: 'Speeky-Tester – Messprotokoll',
+            text: tGlobal('doc.reportTitle'),
             heading: HeadingLevel.HEADING_1,
           }),
           new Paragraph({
-            children: [new TextRun(`Projekt: ${data.sessionName}`)],
+            children: [new TextRun(`${tGlobal('doc.project')}: ${data.sessionName}`)],
           }),
           new Paragraph({
-            children: [new TextRun(`Exportdatum: ${data.exportDate}`)],
+            children: [new TextRun(`${tGlobal('doc.exportDate')}: ${data.exportDate}`)],
           }),
           new Paragraph({
             children: [
               new TextRun(
-                `Ergebnis: ${data.passCount} bestanden, ${data.failCount} nicht bestanden, ${data.inconclusiveCount} unklar`,
+                `${tGlobal('doc.resultLabel')}: ${data.passCount} ${tGlobal('doc.passedWord')}, ${data.failCount} ${tGlobal('doc.failedWord')}, ${data.inconclusiveCount} ${tGlobal('doc.inconclusiveWord')}`,
               ),
             ],
           }),
           new Paragraph({
             children: [
               new TextRun(
-                `Kalibrierung: ${data.calibrationActive ? 'Aktiv' : 'Nicht kalibriert'}`,
+                `${tGlobal('doc.calibration')}: ${data.calibrationActive ? tGlobal('doc.calActive') : tGlobal('doc.calNotCalibrated')}`,
               ),
             ],
           }),
@@ -96,11 +91,11 @@ export async function downloadDocx(data: ExportData, filename: string): Promise<
           }),
           new Paragraph({ text: '' }),
           new Paragraph({
-            children: [new TextRun({ text: `Gerät: ${data.deviceInfo}`, size: 16 })],
+            children: [new TextRun({ text: `${tGlobal('doc.device')}: ${data.deviceInfo}`, size: 16 })],
           }),
           new Paragraph({
             children: [
-              new TextRun({ text: `App-Version: ${data.appVersion}`, size: 16 }),
+              new TextRun({ text: `${tGlobal('doc.appVersion')}: ${data.appVersion}`, size: 16 }),
             ],
           }),
         ],
