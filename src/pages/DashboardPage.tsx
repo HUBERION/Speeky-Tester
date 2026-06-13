@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   createSession,
   getAllSessions,
-  getAllSpeakers,
   getMeasurementsForSession,
+  getSpeakersForSession,
   setActiveSessionId,
 } from '../db';
 import { useSession } from '../hooks/useSession';
@@ -20,12 +20,13 @@ export function DashboardPage() {
   });
   const [sessions, setSessions] = useState<Awaited<ReturnType<typeof getAllSessions>>>([]);
   const [newSessionName, setNewSessionName] = useState('');
+  const [copyFromId, setCopyFromId] = useState<number | ''>('');
 
   useEffect(() => {
     async function load() {
       if (!session?.id) return;
       const [speakers, measurements, allSessions] = await Promise.all([
-        getAllSpeakers(),
+        getSpeakersForSession(session.id),
         getMeasurementsForSession(session.id),
         getAllSessions(),
       ]);
@@ -46,9 +47,13 @@ export function DashboardPage() {
     const name =
       newSessionName.trim() ||
       `Messung ${new Date().toLocaleDateString('de-DE')}`;
-    const id = await createSession(name);
+    const id = await createSession(
+      name,
+      copyFromId === '' ? undefined : copyFromId,
+    );
     await setActiveSessionId(id);
     setNewSessionName('');
+    setCopyFromId('');
     await refresh();
   }
 
@@ -110,6 +115,28 @@ export function DashboardPage() {
             onChange={(e) => setNewSessionName(e.target.value)}
           />
         </div>
+        {sessions.length > 0 && (
+          <div className="form-group">
+            <label>Lautsprecher übernehmen von</label>
+            <select
+              value={copyFromId}
+              onChange={(e) =>
+                setCopyFromId(e.target.value ? Number(e.target.value) : '')
+              }
+            >
+              <option value="">– keine (leer starten) –</option>
+              {sessions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <p className="hint">
+              Kopiert die Lautsprecherliste der gewählten Sitzung in die neue
+              Sitzung. Messergebnisse werden nicht übernommen.
+            </p>
+          </div>
+        )}
         <button type="button" className="btn btn-secondary" onClick={() => void handleNewSession()}>
           Neue Testsitzung erstellen
         </button>

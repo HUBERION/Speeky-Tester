@@ -62,10 +62,12 @@ export interface ColumnMapping {
   note?: string;
 }
 
+export type ParsedSpeaker = Omit<Speaker, 'id' | 'sessionId'>;
+
 export function mapRowsToSpeakers(
   rows: ParsedRow[],
   mapping: ColumnMapping,
-): Omit<Speaker, 'id'>[] {
+): ParsedSpeaker[] {
   const now = new Date().toISOString();
   return rows
     .map((row) => ({
@@ -94,7 +96,7 @@ export function guessColumnMapping(headers: string[]): ColumnMapping {
 
 export function findDuplicateWarnings(
   existing: Speaker[],
-  incoming: Omit<Speaker, 'id'>[],
+  incoming: ParsedSpeaker[],
 ): string[] {
   const warnings: string[] = [];
   for (const item of incoming) {

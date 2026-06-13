@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   deleteMeasurement,
-  getAllSpeakers,
   getMeasurementsForSession,
+  getSpeakersForSession,
   updateMeasurement,
 } from '../db';
 import { useSession } from '../hooks/useSession';
@@ -32,7 +32,7 @@ export function ProtocolPage() {
     if (!session?.id) return;
     const [m, s] = await Promise.all([
       getMeasurementsForSession(session.id),
-      getAllSpeakers(),
+      getSpeakersForSession(session.id),
     ]);
     setMeasurements(m.reverse());
     setSpeakers(s);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addSpeaker, getAllSpeakers } from '../db';
+import { addSpeaker, getSpeakersForSession } from '../db';
 import {
   findDuplicateWarnings,
   guessColumnMapping,
@@ -10,11 +10,12 @@ import {
 } from '../import/csvXls';
 
 interface Props {
+  sessionId: number;
   onClose: () => void;
   onImported: () => void;
 }
 
-export function ImportModal({ onClose, onImported }: Props) {
+export function ImportModal({ sessionId, onClose, onImported }: Props) {
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -27,7 +28,7 @@ export function ImportModal({ onClose, onImported }: Props) {
       const data = await parseImportFile(file);
       setPreview(data);
       setMapping(guessColumnMapping(data.headers));
-      const existing = await getAllSpeakers();
+      const existing = await getSpeakersForSession(sessionId);
       const speakers = mapRowsToSpeakers(data.rows, guessColumnMapping(data.headers));
       setWarnings(findDuplicateWarnings(existing, speakers));
     } catch (e) {
@@ -41,7 +42,7 @@ export function ImportModal({ onClose, onImported }: Props) {
     try {
       const speakers = mapRowsToSpeakers(preview.rows, mapping);
       for (const s of speakers) {
-        await addSpeaker(s);
+        await addSpeaker({ ...s, sessionId });
       }
       onImported();
     } catch (e) {

@@ -114,7 +114,7 @@ export function SettingsPage() {
             }
           />
           <p className="hint">
-            Signal wird im Bereich Zielfrequenz ± Streuung gemessen (z. B. ±50 Hz).
+            Signal wird im Bereich Zielfrequenz ± Streuung gemessen (z. B. ±50 Hz).
           </p>
         </div>
         <div className="form-group">

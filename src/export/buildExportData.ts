@@ -1,8 +1,8 @@
 import {
-  getAllSpeakers,
   getCalibration,
   getMeasurementsForSession,
   getSession,
+  getSpeakersForSession,
 } from '../db';
 import { getDeviceInfo } from '../audio/analyzer';
 import { getMeasurementDisplay } from '../lib/measurementDisplay';
@@ -14,7 +14,7 @@ export async function buildExportData(sessionId: number): Promise<ExportData> {
   const session = await getSession(sessionId);
   if (!session) throw new Error('Sitzung nicht gefunden');
   const [speakers, measurements, calibration] = await Promise.all([
-    getAllSpeakers(),
+    getSpeakersForSession(sessionId),
     getMeasurementsForSession(sessionId),
     getCalibration(),
   ]);
