@@ -21,6 +21,7 @@ export const resources: Record<Lang, Record<string, unknown>> = {
       yes: 'Yes',
       no: 'No',
       active: 'active',
+      noLocation: '–',
     },
     lang: {
       label: 'Language',
@@ -142,6 +143,7 @@ export const resources: Record<Lang, Record<string, unknown>> = {
       discard: 'Discard',
       micError: 'Microphone access failed. Please grant permission.',
       adhocDefaultLabel: 'Ad-hoc {time}',
+      adhocUnlabeled: 'Ad-hoc measurement',
     },
     protocol: {
       title: 'Log – {name}',
@@ -208,6 +210,8 @@ export const resources: Record<Lang, Record<string, unknown>> = {
       appVersion: 'App version',
       totalSpeakers: 'Total speakers',
       demoFilename: 'speaker_template',
+      adhocPrefix: 'Ad-hoc',
+      adhocDefaultName: 'Ad-hoc measurement',
       col: {
         name: 'Name',
         location: 'Location',
@@ -249,6 +253,7 @@ export const resources: Record<Lang, Record<string, unknown>> = {
       yes: 'Ja',
       no: 'Nein',
       active: 'aktiv',
+      noLocation: '–',
     },
     lang: {
       label: 'Sprache',
@@ -370,6 +375,7 @@ export const resources: Record<Lang, Record<string, unknown>> = {
       discard: 'Verwerfen',
       micError: 'Mikrofon-Zugriff fehlgeschlagen. Bitte Berechtigung erteilen.',
       adhocDefaultLabel: 'Ad-hoc {time}',
+      adhocUnlabeled: 'Ad-hoc Messung',
     },
     protocol: {
       title: 'Protokoll – {name}',
@@ -436,6 +442,8 @@ export const resources: Record<Lang, Record<string, unknown>> = {
       appVersion: 'App-Version',
       totalSpeakers: 'Lautsprecher gesamt',
       demoFilename: 'lautsprecher_vorlage',
+      adhocPrefix: 'Ad-hoc',
+      adhocDefaultName: 'Ad-hoc Messung',
       col: {
         name: 'Name',
         location: 'Standort',

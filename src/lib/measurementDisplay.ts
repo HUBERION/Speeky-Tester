@@ -1,3 +1,4 @@
+import { tGlobal } from '../i18n';
 import type { Measurement, Speaker } from '../types';
 
 export function isAdhocMeasurement(measurement: Measurement): boolean {
@@ -12,8 +13,12 @@ export function getMeasurementDisplay(
     return { name: speaker.name, location: speaker.location, isAdhoc: false };
   }
   return {
-    name: measurement.adhocLabel?.trim() || 'Ad-hoc Messung',
-    location: measurement.adhocLocation?.trim() || '–',
+    name: measurement.adhocLabel?.trim() || tGlobal('measure.adhocUnlabeled'),
+    location: measurement.adhocLocation?.trim() || tGlobal('common.noLocation'),
     isAdhoc: true,
   };
+}
+
+export function formatAdhocExportName(name: string): string {
+  return `[${tGlobal('doc.adhocPrefix')}] ${name}`;
 }

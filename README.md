@@ -1,16 +1,26 @@
 # Speeky-Tester
 
-Offline-fähige PWA zur Lautsprecher-Messung mit **externem Testton**. Die App erfasst über das Mikrofon, ob ein konfigurierbarer Ton (typisch 17–22 kHz, für Menschen meist unhörbar) messbar ist und protokolliert Pegelwerte (dBFS, SNR, optional geschätzter dB SPL).
+Offline-fähige **PWA** zur Lautsprecher-Prüfung mit **externem Testton**. Die App misst über das Mikrofon, ob ein konfigurierbarer Hochfrequenz-Ton (typisch 17–22 kHz, für Menschen meist unhörbar) messbar ist, und protokolliert Pegelwerte (dBFS, SNR, optional geschätzter dB SPL).
+
+Der Testton wird **nicht** von der App erzeugt – eine externe PA-Anlage spielt ihn ab; die App hört nur zu.
+
+**Live-Demo (HTTPS):** https://huberion.github.io/Speeky-Tester/
 
 ## Funktionen
 
-- Lautsprecherliste manuell pflegen oder per **CSV/XLS** importieren
-- Messung pro Lautsprecher mit konfigurierbarer Frequenz und Messdauer
-- Erkennung: Ton ja/nein, Pegel (dBFS), SNR, Peak, Mittelwert
-- Optional: SPL-Kalibrierung für geschätzte dB-SPL-Werte
-- Testsitzungen mit Fortschrittsanzeige
-- Export als **PDF**, **Word (.docx)** und **CSV**
-- Vollständig **offline** nach erstem Laden (Service Worker + IndexedDB)
+- **Testsitzungen** – mehrere Projekte/Objekte parallel (z. B. Gebäude A vs. B)
+- **Lautsprecher pro Sitzung** – eigene Liste je Sitzung, optional von einer anderen Sitzung übernehmen
+- **Messung aus Liste** – nacheinander alle Lautsprecher einer Sitzung prüfen
+- **Ad-hoc-Messung** – Schnelltest ohne Listeneintrag (Stichprobe, Test vor Ort)
+- **Konfigurierbare Frequenz** und **Frequenz-Streuung** (z. B. 19.000 Hz ±50 Hz)
+- **Erkennung:** Ton ja/nein, Pegel (dBFS), SNR, Peak, Mittelwert, Pass/Fail
+- **Optional:** SPL-Kalibrierung für geschätzte dB-SPL-Werte
+- **Import:** CSV/XLS mit Spalten-Mapping + Demo-Vorlagen zum Download
+- **Lautsprecher kopieren** – Duplikat mit nummeriertem Namen (z. B. „LS-001 (Kopie 2)“)
+- **Export:** PDF, Word (.docx), Excel (.xlsx), CSV
+- **Mehrsprachig:** Deutsch / Englisch (Umschalter im Header)
+- **Offline** nach erstem Laden (Service Worker + IndexedDB)
+- **Optional:** native Android-App via Capacitor
 
 ## Schnellstart (Entwicklung)
 
@@ -19,75 +29,57 @@ npm install
 npm run dev
 ```
 
-Öffnen Sie `http://localhost:5173` im Browser.
+Browser: `http://localhost:5173`
 
-### Vom iPhone / Tablet im WLAN testen
+### Vom Smartphone im WLAN
 
-Der Dev-Server ist für Netzwerk-Zugriff konfiguriert (`--host`). Nach `npm run dev` zeigt die Konsole z. B.:
+Nach `npm run dev` die **Network**-URL aus der Konsole nutzen (z. B. `http://192.168.x.x:5173`).
 
-```text
-➜  Network: http://192.168.10.11:5173/
-```
+**Wichtig:** Safari/iOS erlaubt Mikrofon-Zugriff nur über **HTTPS** oder `localhost` – nicht über eine nackte LAN-IP. Für iPhone-Tests daher GitHub Pages (HTTPS) oder die Android-App verwenden.
 
-Diese **Network**-URL auf dem iPhone öffnen (PC und iPhone im gleichen WLAN).
+## Deployment (GitHub Pages)
 
-**Wichtig:**
+Bei jedem Push auf `main` baut der Workflow (`.github/workflows/deploy-pages.yml`) und veröffentlicht auf den Branch `gh-pages`.
 
-- Windows-Firewall: Beim ersten Start ggf. Zugriff für Node.js im privaten Netzwerk erlauben.
-- **Mikrofon auf dem iPhone:** Safari erlaubt `getUserMedia` nur über **HTTPS** oder `localhost` – nicht über `http://192.168.x.x`. Lädt die Seite, aber das Mikrofon geht nicht, liegt es daran. Dann: PWA per HTTPS deployen, `npm run cap:android` nutzen, oder lokal ein HTTPS-Dev-Setup (z. B. mkcert) einrichten.
+**Einmalig aktivieren** (Repo-Einstellungen):
 
-## Test-Deployment (GitHub Pages)
+1. https://github.com/HUBERION/Speeky-Tester/settings/pages
+2. **Source:** Deploy from a branch → `gh-pages` → `/ (root)` → Save
 
-Die App wird automatisch auf den Branch `gh-pages` deployed.
+URL: **https://huberion.github.io/Speeky-Tester/**
 
-**Einmalig aktivieren** (Repo-Besitzer):
-
-1. Öffnen: https://github.com/HUBERION/Speeky-Tester/settings/pages
-2. **Source:** Deploy from a branch
-3. **Branch:** `gh-pages` → `/ (root)` → Save
-
-Danach erreichbar unter:
-
-**https://huberion.github.io/Speeky-Tester/**
-
-(HTTPS – Mikrofon auf dem iPhone funktioniert damit.)
-
-Bei jedem Push auf `main` baut der GitHub-Workflow neu und aktualisiert `gh-pages`.
-
-## Produktions-Build
+Lokaler Pages-Build:
 
 ```bash
-npm run build
+npm run build:pages
 npm run preview
 ```
 
-## Als PWA installieren
-
-1. App im Browser öffnen (nach `npm run build && npm run preview` oder auf einem Webserver)
-2. **Android Chrome:** Menü → „Zum Startbildschirm hinzufügen“
-3. **iOS Safari:** Teilen → „Zum Home-Bildschirm“
-
-## Android-App (Capacitor, optional)
-
-```bash
-npm run build
-npx cap add android    # einmalig
-npx cap sync android
-npx cap open android   # Android Studio
-```
-
-In Android Studio: APK bauen oder auf Gerät deployen. Mikrofon-Berechtigung ist in der Manifest-Datei erforderlich (wird von Capacitor standardmäßig gesetzt).
-
 ## Nutzung
 
-1. Lautsprecher anlegen oder CSV/XLS importieren (Spalten: `name`, `location`, optional `note`)
-2. Testsitzung auf dem Dashboard erstellen oder fortsetzen
-3. Unter **Messen** Lautsprecher wählen, Frequenz einstellen
-4. **Externen Testton** an der PA-Anlage starten
-5. „Messung vorbereiten“ → Countdown → Aufnahme
-6. Ergebnis speichern, Protokoll prüfen, exportieren
+### 1. Sitzung & Lautsprecher (Tab „Lautsprecher“)
 
-### CSV-Import Beispiel
+- Neue Testsitzung anlegen (optional Lautsprecherliste von einer anderen Sitzung **kopieren**)
+- Sitzungen wechseln oder löschen (inkl. aller Lautsprecher und Messungen der Sitzung)
+- Lautsprecher manuell anlegen, **importieren** (CSV/XLS) oder **kopieren**
+
+### 2. Messen (Tab „Messen“)
+
+| Modus | Beschreibung |
+|--------|----------------|
+| **Aus Liste** | Lautsprecher der aktiven Sitzung wählen, Messung zuordnen |
+| **Ad-hoc** | Schnellmessung mit optionaler Bezeichnung/Standort |
+
+Ablauf: Externen Testton an der PA starten → „Messung vorbereiten“ → 3-Sekunden-Countdown → Aufnahme → Ergebnis speichern.
+
+### 3. Protokoll & Export
+
+- Alle Messungen der Sitzung einsehen (Liste + Ad-hoc)
+- Export als PDF, Word, Excel oder CSV
+
+### CSV/XLS-Import
+
+Erwartete Spalten (Header werden automatisch erkannt):
 
 ```csv
 name,location,note
@@ -95,18 +87,59 @@ LS-001,Eingang Nord,
 LS-002,Flur 2.OG,Reparatur 2024
 ```
 
+Im Import-Dialog stehen **Demo-Vorlagen** (CSV/Excel) zum Download bereit.
+
+## Android-App (Capacitor, optional)
+
+```bash
+npm run build
+npx cap add android    # einmalig
+npm run cap:sync
+npm run cap:open android
+```
+
+Oder: `npm run cap:android`
+
 ## Geräte-Hinweise
 
 - Viele Smartphone-Mikrofone filtern oberhalb von **18–20 kHz** – Messungen bei 22 kHz können unzuverlässig sein
 - **dB SPL** ohne Kalibriermikrofon ist nur näherungsweise (Kalibrierung unter Einstellungen)
-- **iOS:** Mikrofon nur bei aktiver, fokussierter App verfügbar
-- Der Testton wird **nicht** von der App erzeugt – ein externes System (PA-Anlage) muss den Ton abspielen
+- **iOS:** Mikrofon nur bei aktiver, fokussierter App
+- Nach App-Updates ggf. **hart neu laden** (PWA-Cache / Service Worker)
 
 ## Technologie
 
-- Vite + React + TypeScript
-- Dexie (IndexedDB)
-- Web Audio API (FFT-Analyse)
-- vite-plugin-pwa
-- jsPDF, docx, SheetJS, PapaParse
-- Capacitor (optional für native Android-Installation)
+| Bereich | Stack |
+|---------|--------|
+| Frontend | Vite 8, React 19, TypeScript |
+| Persistenz | Dexie (IndexedDB), kein Backend |
+| Audio | Web Audio API (FFT) |
+| Offline | vite-plugin-pwa |
+| Export | jsPDF, docx, SheetJS (xlsx), PapaParse |
+| i18n | Eigene EN/DE-Lösung (`src/i18n/`) |
+| Native | Capacitor 8 (optional) |
+
+## Projektstruktur (Kurz)
+
+```
+src/
+  audio/analyzer.ts      FFT-Messung, SPL-Kalibrierung
+  db/index.ts            Dexie-Schema, Migrationen, CRUD
+  i18n/                  Übersetzungen EN/DE
+  pages/                 Dashboard, Speakers, Measure, Protocol, Export, Settings
+  import/csvXls.ts       Import + Demo-Vorlagen
+  export/                PDF, Word, Excel, CSV
+```
+
+Ausführlicher Kontext für Entwicklung/KI: siehe [`CLAUDE.md`](CLAUDE.md).
+
+## Befehle
+
+```bash
+npm run dev          # Dev-Server (--host, Port 5173)
+npm run build        # Produktions-Build
+npm run preview      # Build lokal testen (Port 4173)
+npm run lint         # ESLint
+npm run build:pages  # Build für GitHub Pages
+npm run cap:android  # Android Studio öffnen
+```

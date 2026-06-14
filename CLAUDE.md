@@ -1,11 +1,12 @@
 # Speeky-Tester – Projektkontext für Claude Code
 
-Offline-fähige **PWA zur Lautsprecher-Prüfung**. Die App misst über das Geräte­mikrofon,
+Offline-fähige **PWA zur Lautsprecher-Prüfung**. Die App misst über das Gerätemikrofon,
 ob ein **extern abgespielter** Hochfrequenz-Testton (typ. 17–22 kHz, für Menschen meist
-unhörbar) an einem Lautsprecher messbar ist, und protokolliert die Pegel. Der Ton wird
-**nicht** von der App erzeugt – eine externe PA-Anlage spielt ihn ab; die App hört nur zu.
+unhörbar) messbar ist, und protokolliert die Pegel. Der Ton wird **nicht** von der App
+erzeugt – eine externe PA-Anlage spielt ihn ab; die App hört nur zu.
 
-Sprache der App und UI: **Deutsch**. Code/Bezeichner: Englisch. Doku/Kommentare gemischt.
+**UI-Sprachen:** Englisch und Deutsch (Umschalter im Header). Fallback: Englisch.
+Browser-Sprache `de*` → initial Deutsch. Code/Bezeichner: Englisch.
 
 ## Stack
 
@@ -13,11 +14,12 @@ Sprache der App und UI: **Deutsch**. Code/Bezeichner: Englisch. Doku/Kommentare 
 - **Dexie 4** über IndexedDB (`src/db/index.ts`) – gesamte Persistenz, kein Backend
 - **Web Audio API** (`AnalyserNode`, FFT) für die Messung
 - **vite-plugin-pwa** (`registerType: autoUpdate`, Workbox) – offline nach erstem Laden
-- **Export:** jsPDF + jspdf-autotable (PDF), `docx` (Word), PapaParse (CSV-Im-/Export), SheetJS/`xlsx` (XLS-Import)
+- **Export:** jsPDF + jspdf-autotable (PDF), `docx` (Word), SheetJS/`xlsx` (Excel-Export + XLS-Import), PapaParse (CSV)
 - **Capacitor 8** (optional) für native Android-Verpackung
 - **react-router-dom 7** – Routing mit `basename` aus `import.meta.env.BASE_URL`
+- **i18n:** eigene Lösung ohne Library (`src/i18n/`)
 
-Es gibt **kein Backend und keine Tests**. Alles läuft client-seitig im Browser.
+Es gibt **kein Backend und keine automatisierten Tests**. Alles läuft client-seitig im Browser.
 
 ## Befehle
 
@@ -31,96 +33,144 @@ npm run cap:android  # Build + cap sync + Android Studio öffnen
 ```
 
 `vite.config.ts` setzt `base` aus `process.env.BASE_PATH` (Default `/Speeky-Tester/`).
-Deployment: Push auf `main` → GitHub-Workflow (`.github/workflows/deploy-pages.yml`)
+
+**Deployment:** Push auf `main` → GitHub-Workflow (`.github/workflows/deploy-pages.yml`)
 baut und veröffentlicht auf Branch `gh-pages` → https://huberion.github.io/Speeky-Tester/
 
 ## Architektur / Verzeichnisse
 
 ```
 src/
-  audio/analyzer.ts        Kern: AudioAnalyzer-Klasse, FFT-Auswertung, SPL-Kalibrierung
-  db/index.ts              Dexie-Schema + alle DB-Zugriffsfunktionen
-  types/index.ts           Zentrale Typen (Single Source of Truth für Datenmodell)
-  hooks/useSession.ts      Aktive Testsitzung laden/wechseln (localStorage-Pointer)
-  i18n/                    Mehrsprachigkeit (EN/DE) – siehe Abschnitt unten
-  pages/                   Eine Datei pro Route (Dashboard, Speakers, Measure, Protocol, Export, Settings)
-  components/              Layout (Navigation + Sprachumschalter) + ImportModal
-  import/csvXls.ts         CSV/XLS parsen, Spalten-Mapping raten, Duplikate warnen, Demo-Vorlagen
-  export/                  buildExportData → csv.ts | pdf.ts | docx.ts | xlsx.ts
-  lib/measurementDisplay.ts  Anzeige-Helfer: Ad-hoc vs. Listen-Lautsprecher
+  audio/analyzer.ts           AudioAnalyzer, FFT, SPL-Kalibrierung, formatFrequencyBand
+  db/index.ts                 Dexie-Schema v2, Migrationen, CRUD
+  types/index.ts              Zentrale Typen (Datenmodell)
+  hooks/useSession.ts         Aktive Testsitzung (localStorage-Pointer)
+  i18n/
+    translations.ts           Alle UI-/Export-Strings EN + DE
+    core.ts                   translate, useT, tGlobal, fmtDateTime, localeFor
+    LanguageProvider.tsx      React-Provider + Sprachpersistenz
+  pages/
+    DashboardPage.tsx         Übersicht, Fortschritt, Mess-Links
+    SpeakersPage.tsx          Sitzungen + Lautsprecher (Zentrale Verwaltung)
+    MeasurePage.tsx           Listen- und Ad-hoc-Messung
+    ProtocolPage.tsx          Messprotokoll der Sitzung
+    ExportPage.tsx            PDF / Word / Excel / CSV
+    SettingsPage.tsx          Defaults, SPL-Kalibrierung
+  components/
+    Layout.tsx                Navigation + Sprachumschalter
+    ImportModal.tsx           CSV/XLS-Import (sitzungsgebunden)
+  import/csvXls.ts            Parsen, Spalten-Mapping, Demo-Vorlagen, Duplikat-Warnung
+  export/
+    buildExportData.ts        Export-Daten aggregieren
+    pdf.ts | docx.ts | csv.ts | xlsx.ts
+  lib/measurementDisplay.ts     Ad-hoc vs. Listen-Anzeige, Export-Präfix
 ```
 
-Routing in `src/App.tsx`; alle Seiten liegen unter einem gemeinsamen `<Layout>`.
-**Sitzungsverwaltung** (anlegen/wechseln/löschen/Übernahme) liegt im **Speakers-Tab**
-(`SpeakersPage`) zusammen mit der Lautsprecherliste; das Dashboard ist nur noch
-Übersicht (aktive Sitzung, Fortschritt, Messen-Links).
+Routing in `src/App.tsx`. **Sitzungsverwaltung** liegt im **Speakers-Tab** (`SpeakersPage`);
+das **Dashboard** ist nur Übersicht (aktive Sitzung, Fortschritt, Links zu Messen).
 
 ## Mehrsprachigkeit (i18n)
 
-Eigene, leichtgewichtige Lösung ohne Library. **Standardsprache Englisch**, Deutsch
-umschaltbar (Sprachauswahl im Header). Auswahl wird in `localStorage` (`lang`) gehalten;
-ohne Auswahl wird die Browsersprache erkannt (de → Deutsch, sonst Englisch).
+- **Standardsprache:** Englisch. Deutsch umschaltbar im Header.
+- Persistenz: `localStorage` Key `lang`. Initial: gespeicherte Sprache, sonst Browser (`de*` → Deutsch).
+- **Komponenten:** `const { t, lang, setLang } = useT();` → `t('bereich.key', { var })`
+- **Außerhalb React** (db, export, lib): `tGlobal('key')`, `fmtDateTime()`, `fmtDateNow()`, `localeFor()`
+- **Neue Strings:** immer in `translations.ts` unter `resources.en` **und** `resources.de` eintragen.
+- **Keine hardcodierten UI-Strings** in Komponenten/Exporten – fehlende Keys fallen auf EN, dann Key-String zurück.
+- Ad-hoc-Defaults: `measure.adhocUnlabeled`, Export-Präfix: `doc.adhocPrefix` via `formatAdhocExportName()`.
 
-- `i18n/translations.ts` – alle Strings als verschachteltes Dict (`resources.en` / `.de`), Dot-Pfad-Keys.
-- `i18n/core.ts` – `translate()`, `useT()`-Hook, `I18nContext`, plus **`tGlobal()`** und Datums-Helfer (`fmtDateTime`, `fmtDateNow`, `localeFor`) für **Nicht-React-Code** (db, exports), die die modulweite aktuelle Sprache nutzen.
-- `i18n/LanguageProvider.tsx` – Provider (getrennt, damit `react-refresh/only-export-components` nicht meckert); in `main.tsx` um die App gelegt.
-- In Komponenten: `const { t, lang, setLang } = useT();` und `t('bereich.key', { var })`.
-- Neue Strings **immer in beide Sprachen** in `translations.ts` eintragen; fehlt ein Key, fällt `translate` auf Englisch und dann den Key selbst zurück.
-- Datumsausgaben über `fmtDateTime`/`fmtDateNow` (Locale folgt der Sprache), nicht hartkodiertes `toLocaleString('de-DE')`.
-
-## Datenmodell (Dexie, DB-Name `speeky-tester`, **v2**)
+## Datenmodell (Dexie, DB-Name `speeky-tester`, **Version 2**)
 
 Tabellen: `speakers`, `sessions`, `measurements`, `calibration`, `appSettings`.
-Typen in `src/types/index.ts`. Wichtige Beziehungen:
+Typen in `src/types/index.ts`.
 
-- **Speaker** – gehört zu **genau einer Sitzung** (`sessionId`, Pflichtfeld) plus `name`, `location`, `note`. Lautsprecher sind also **sitzungsbezogen**, nicht global. Geladen über `getSpeakersForSession(sessionId)`.
-- **TestSession** – eine Prüfsitzung mit eingefrorenen `settings` (Frequenz, Toleranz, SNR-Schwelle, Dauer). Wird beim Anlegen aus `appSettings` kopiert. Beim Anlegen kann optional die Lautsprecherliste einer anderen Sitzung übernommen werden (`createSession(name, copyFromSessionId?)` → `copySpeakersToSession`).
-- **Measurement** – ein Messergebnis, gehört zu `sessionId`. Entweder einem `speakerId` zugeordnet **oder** „Ad-hoc" (dann `adhocLabel`/`adhocLocation`, kein `speakerId`).
-- **Calibration** – optionaler SPL-Offset (Singleton: max. 1 Zeile).
-- **AppSettings** – globale Defaults (Singleton).
+| Entität | Beschreibung |
+|---------|--------------|
+| **Speaker** | Gehört zu **einer Sitzung** (`sessionId` Pflicht): `name`, `location`, `note?` |
+| **TestSession** | Prüfsitzung mit eingefrorenen `settings` (Frequenz, Toleranz, SNR-Schwelle, Dauer). Beim Anlegen aus `appSettings` kopiert. Optional Lautsprecher von anderer Sitzung übernehmen: `createSession(name, copyFromSessionId?)` |
+| **Measurement** | Ergebnis einer Sitzung. Entweder `speakerId` (Liste) **oder** Ad-hoc (`adhocLabel?`, `adhocLocation?`, kein `speakerId`) |
+| **Calibration** | Optionaler SPL-Offset (Singleton) |
+| **AppSettings** | Globale Defaults (Singleton) |
 
-Konventionen, die im Code vorausgesetzt werden:
+### Konventionen
 
-- **Aktive Sitzung** wird als ID in `localStorage` (`activeSessionId`) gehalten, nicht in der DB. `ensureDefaultSession()` legt bei Bedarf automatisch eine an.
-- **`deleteSession()` löscht kaskadierend** die zugehörigen Messungen **und** Lautsprecher der Sitzung.
-- **Schema-Migration v1→v2** (`db/index.ts`): vormals globale Lautsprecher werden der aktiven (bzw. ersten) Sitzung zugeordnet; existiert keine Sitzung, wird eine „Migriert …"-Sitzung angelegt. Bei weiteren Modelländerungen erneut `version()` hochziehen.
-- **„Eine Messung pro Lautsprecher pro Sitzung":** `addMeasurement()` macht ein Upsert – existiert bereits eine Messung für `[sessionId+speakerId]`, wird sie **überschrieben**. Ad-hoc-Messungen (ohne `speakerId`) werden dagegen immer neu angelegt.
-- Defaults: Frequenz **19000 Hz**, Toleranz **±50 Hz**, Pass-SNR **6 dB**, Dauer **5000 ms** (in `db/index.ts` und an mehreren Stellen dupliziert – bei Änderung alle prüfen).
+- **Aktive Sitzung:** ID in `localStorage` (`activeSessionId`). `ensureDefaultSession()` legt bei Bedarf eine an.
+- **`deleteSession(id)`:** löscht kaskadierend Messungen **und** Lautsprecher der Sitzung. War die Sitzung aktiv → `activeSessionId` wird geleert, beim nächsten Zugriff neue Default-Sitzung.
+- **Migration v1→v2:** Bestehende globale Lautsprecher werden der aktiven/ersten Sitzung zugeordnet; ggf. „Migriert …“-Sitzung angelegt. Bei Schema-Änderungen `version()` erhöhen + `upgrade()`.
+- **Upsert pro Lautsprecher:** `addMeasurement()` überschreibt existierende Messung für `[sessionId+speakerId]`. Ad-hoc-Messungen werden immer neu angelegt.
+- **Defaults:** 19000 Hz, ±50 Hz Toleranz, Pass-SNR 6 dB, Dauer 5000 ms (`DEFAULT_SETTINGS` in `db/index.ts` – bei Änderung alle Stellen prüfen).
 
-## Messlogik (`src/audio/analyzer.ts`) – das Herzstück
+### Wichtige DB-Funktionen
 
-- `FFT_SIZE = 8192`. Mikrofon wird ohne `echoCancellation`/`noiseSuppression`/`autoGainControl` geöffnet (würde die Hochton-Messung verfälschen).
-- **Zielband:** Bins im Bereich `frequencyHz ± toleranceHz` → mittlere Amplitude = Signal.
-- **Rauschboden:** Median der Nachbar-Bins außerhalb des Bands (mit Guard-Abstand `marginBins`).
-- **SNR** = `levelDbfs − noiseFloorDbfs`. Amplituden (0–1 aus `getByteFrequencyData`) → dBFS via `20·log10`.
-- **Live-Erkennung pro Frame:** `snrDb ≥ 3 && levelDbfs > −80`.
-- **Messung** (`measure()`): pollt ~alle 50 ms über `durationMs`, mittelt Pegel/Noise/SNR, nimmt Peak.
-  - `detected` = Mehrheit der Frames erkannt.
-  - **Status:** `pass` wenn `detected && snrDb ≥ passSnrThreshold`; `inconclusive` wenn `!detected && snrDb < 3` (zu leise/kein Signal); sonst `fail`.
-- **SPL-Kalibrierung** (`applySplCalibration`): nur ein additiver Offset `referenceDbSpl − referenceDbfs` auf den dBFS-Wert. Liefert `undefined` ohne Kalibrierung → `levelDbSpl` bleibt leer.
+```text
+getSpeakersForSession(sessionId)
+copySpeakersToSession(fromId, toId)
+getMeasurementsForSession(sessionId)
+addMeasurement / updateMeasurement / deleteMeasurement
+createSession(name, copyFromSessionId?)
+deleteSession(id)
+getAppSettings / saveAppSettings
+getCalibration / saveCalibration / clearCalibration
+```
 
-## Messablauf (UI, `pages/MeasurePage.tsx`)
+## Messlogik (`src/audio/analyzer.ts`)
 
-Zwei Modi: **`list`** (Lautsprecher aus Liste) und **`adhoc`** (Schnellmessung).
-Phasen: `select → countdown (3 s) → measuring → result`. Im Result speichert/​verwirft der
-Nutzer. Nach dem Speichern im Listen-Modus springt die Auswahl automatisch zum nächsten
-ungetesteten Lautsprecher. Der `AudioAnalyzer` lebt in einem `useRef` und wird beim Unmount
-gestoppt.
+- `FFT_SIZE = 8192`. Mikrofon **ohne** `echoCancellation`/`noiseSuppression`/`autoGainControl`.
+- **Zielband:** Energie in Bins `frequencyHz ± toleranceHz` (konfigurierbar, Default ±50 Hz).
+- **Rauschboden:** Median benachbarter Bins außerhalb des Bands.
+- **SNR** = `levelDbfs − noiseFloorDbfs` (dBFS aus `20·log10` der normalisierten FFT-Amplitude).
+- **Live-Erkennung:** `snrDb ≥ 3 && levelDbfs > −80`.
+- **`measure()`:** ~50 ms Polling über `durationMs`, Mittelwert/Peak, Mehrheitsentscheid für `detected`.
+- **Status:** `pass` wenn `detected && snrDb ≥ passSnrThreshold`; `inconclusive` wenn `!detected && snrDb < 3`; sonst `fail`.
+- **SPL:** `applySplCalibration()` addiert Offset; ohne Kalibrierung `levelDbSpl` = `undefined`.
+
+## Messablauf UI (`pages/MeasurePage.tsx`)
+
+Zwei Modi: **`list`** (Lautsprecher aus Sitzungsliste) und **`adhoc`** (Schnellmessung).
+Phasen: `select → countdown (3 s) → measuring → result`.
+
+Nach Speichern im Listen-Modus: automatisch nächster ungetesteter Lautsprecher.
+`AudioAnalyzer` in `useRef`, beim Unmount `stop()`.
+
+URL-Parameter: `/measure?mode=adhoc` für direkten Ad-hoc-Start.
+
+## Import / Export
+
+**Import** (`import/csvXls.ts`):
+- Spalten `name`, `location`, optional `note` (DE/EN-Header werden erraten)
+- `downloadDemoCsv()` / `downloadDemoXlsx()` – lokalisierte Vorlagen
+- Import immer in **aktive Sitzung** (`ImportModal` erhält `sessionId`)
+
+**Export** (`export/`):
+- Formate: PDF, Word, Excel, CSV
+- Sprache der Export-Texte folgt `tGlobal()` / aktueller UI-Sprache
+- Ad-hoc-Einträge: `[Ad-hoc]`-Präfix via `formatAdhocExportName()`
 
 ## Wichtige Stolpersteine
 
-- **Mikrofon braucht HTTPS oder `localhost`.** Über `http://192.168.x.x` (LAN-IP) blockiert
-  Safari/iOS `getUserMedia` – die Seite lädt, aber die Messung schlägt fehl. Deshalb für
-  Gerätetests GitHub Pages (HTTPS) oder die Android-App nutzen, nicht die nackte Dev-LAN-URL.
-- **Hardware-Grenze:** Viele Smartphone-Mikrofone filtern oberhalb ~18–20 kHz. Messungen
-  bei 22 kHz sind oft unzuverlässig – kein Code-Bug, sondern physikalische Grenze.
-- **iOS:** Mikrofon nur bei aktiver, fokussierter App.
-- **`base`/Routing:** Bei lokalem `preview` greift Default-Base `/Speeky-Tester/`. Der Router
-  leitet die `basename` aus `BASE_URL` ab – beim Verlinken/Testen beachten.
-- Beim Ändern des Datenmodells **Dexie-`version()` hochziehen** und ggf. Migration ergänzen.
+| Thema | Detail |
+|-------|--------|
+| Mikrofon | Braucht **HTTPS** oder `localhost`. LAN-IP (`http://192.168.x.x`) → iOS blockiert Messung |
+| Ultraschall | Viele Mikrofone filtern >18–20 kHz – kein Software-Bug |
+| iOS | Mikrofon nur bei aktiver App |
+| Routing | Default-Base `/Speeky-Tester/` – Router-`basename` aus `BASE_URL` |
+| PWA-Cache | Nach Deploy ggf. hart neu laden |
+| Bundle | ~1,6 MB JS (SheetJS) – für Feld-PWA akzeptabel |
 
-## CSV/XLS-Import (`import/csvXls.ts`)
+## CSV/XLS-Import
 
-Erwartete Spalten: `name`, `location`, optional `note`. `guessColumnMapping()` errät
-Spalten anhand deutscher/englischer Stichwörter (z. B. `standort`/`location`/`raum`).
-Zeilen ohne `name` werden verworfen; `findDuplicateWarnings()` warnt bei Name+Standort-Dubletten.
+`guessColumnMapping()` erkennt u. a. `name`/`bezeichnung`/`lautsprecher`, `standort`/`location`/`raum`, `notiz`/`note`.
+Zeilen ohne `name` werden verworfen. `findDuplicateWarnings()` warnt bei Name+Standort-Dubletten (Import trotzdem möglich).
+
+## Speaker Copy (`SpeakersPage.handleCopy`)
+
+Kopiert Lautsprecher in dieselbe Sitzung mit suffix `(Copy)` / `(Kopie)` – lokalisiert via `speakers.copySuffix`.
+Nummerierung bei mehrfachen Kopien: `(Copy 2)`, `(Copy 3)` … Regex strippt vorhandene Suffixe vor Neuberechnung.
+
+## Was bei Änderungen beachten
+
+1. Neue UI-Texte → `translations.ts` (EN + DE)
+2. Datenmodell-Änderung → Dexie `version()` + Migration
+3. Default-Werte → `DEFAULT_SETTINGS` in `db/index.ts` und ggf. `SettingsPage`
+4. Export-Spalten → `doc.col.*` Keys + alle vier Export-Module
+5. README und diese Datei bei größeren Features aktualisieren

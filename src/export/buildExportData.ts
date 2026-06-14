@@ -6,7 +6,7 @@ import {
 } from '../db';
 import { getDeviceInfo } from '../audio/analyzer';
 import { localeFor, tGlobal } from '../i18n';
-import { getMeasurementDisplay } from '../lib/measurementDisplay';
+import { getMeasurementDisplay, formatAdhocExportName } from '../lib/measurementDisplay';
 import type { ExportData, ExportRow } from '../types';
 
 const APP_VERSION = '1.0.0';
@@ -24,7 +24,9 @@ export async function buildExportData(sessionId: number): Promise<ExportData> {
     const speaker = m.speakerId != null ? speakerMap.get(m.speakerId) : undefined;
     const display = getMeasurementDisplay(m, speaker);
     return {
-      speakerName: display.isAdhoc ? `[Ad-hoc] ${display.name}` : display.name,
+      speakerName: display.isAdhoc
+        ? formatAdhocExportName(display.name)
+        : display.name,
       location: display.location,
       frequencyHz: m.frequencyHz,
       frequencyToleranceHz: m.frequencyToleranceHz ?? 50,
