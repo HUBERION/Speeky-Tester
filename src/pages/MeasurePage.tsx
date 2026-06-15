@@ -14,6 +14,7 @@ import {
 } from '../audio/analyzer';
 import { useSession } from '../hooks/useSession';
 import { localeFor, useT } from '../i18n';
+import { NumericInput } from '../components/NumericInput';
 import type { LiveFrame, MeasurementResult, Speaker } from '../types';
 
 type Phase = 'select' | 'countdown' | 'measuring' | 'result';
@@ -290,26 +291,26 @@ export function MeasurePage() {
         <h2>{t('measure.params')}</h2>
         <div className="form-group">
           <label>{t('measure.targetFreq')}</label>
-          <input
-            type="number"
+          <NumericInput
+            value={frequency}
+            onChange={setFrequency}
             min={10000}
             max={24000}
             step={100}
-            value={frequency}
-            onChange={(e) => setFrequency(Number(e.target.value))}
+            integer
             disabled={phase === 'measuring' || phase === 'countdown'}
           />
           <p className="hint">{t('measure.recommended')}</p>
         </div>
         <div className="form-group">
           <label>{t('measure.freqSpread')}</label>
-          <input
-            type="number"
+          <NumericInput
+            value={frequencyTolerance}
+            onChange={setFrequencyTolerance}
             min={0}
             max={500}
             step={10}
-            value={frequencyTolerance}
-            onChange={(e) => setFrequencyTolerance(Number(e.target.value))}
+            integer
             disabled={phase === 'measuring' || phase === 'countdown'}
           />
           <p className="hint">
@@ -320,12 +321,12 @@ export function MeasurePage() {
         </div>
         <div className="form-group">
           <label>{t('measure.duration')}</label>
-          <input
-            type="number"
+          <NumericInput
+            value={duration / 1000}
+            onChange={(sec) => setDuration(sec * 1000)}
             min={2}
             max={30}
-            value={duration / 1000}
-            onChange={(e) => setDuration(Number(e.target.value) * 1000)}
+            integer
             disabled={phase === 'measuring' || phase === 'countdown'}
           />
         </div>

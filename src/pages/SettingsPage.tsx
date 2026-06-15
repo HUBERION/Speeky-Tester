@@ -7,6 +7,7 @@ import {
   saveCalibration,
 } from '../db';
 import { AudioAnalyzer } from '../audio/analyzer';
+import { NumericInput } from '../components/NumericInput';
 import { fmtDateTime, useT } from '../i18n';
 import type { AppSettings, Calibration } from '../types';
 
@@ -86,66 +87,54 @@ export function SettingsPage() {
         <h2>{t('settings.defaults')}</h2>
         <div className="form-group">
           <label>{t('settings.defaultFreq')}</label>
-          <input
-            type="number"
+          <NumericInput
+            value={settings.defaultFrequency}
+            onChange={(defaultFrequency) =>
+              setSettings({ ...settings, defaultFrequency })
+            }
             min={10000}
             max={24000}
             step={100}
-            value={settings.defaultFrequency}
-            onChange={(e) =>
-              setSettings({
-                ...settings,
-                defaultFrequency: Number(e.target.value),
-              })
-            }
+            integer
           />
         </div>
         <div className="form-group">
           <label>{t('settings.defaultSpread')}</label>
-          <input
-            type="number"
+          <NumericInput
+            value={settings.frequencyToleranceHz}
+            onChange={(frequencyToleranceHz) =>
+              setSettings({ ...settings, frequencyToleranceHz })
+            }
             min={0}
             max={500}
             step={10}
-            value={settings.frequencyToleranceHz}
-            onChange={(e) =>
-              setSettings({
-                ...settings,
-                frequencyToleranceHz: Number(e.target.value),
-              })
-            }
+            integer
           />
           <p className="hint">{t('settings.spreadHint')}</p>
         </div>
         <div className="form-group">
           <label>{t('settings.passSnr')}</label>
-          <input
-            type="number"
+          <NumericInput
+            value={settings.passSnrThreshold}
+            onChange={(passSnrThreshold) =>
+              setSettings({ ...settings, passSnrThreshold })
+            }
             min={0}
             max={30}
             step={1}
-            value={settings.passSnrThreshold}
-            onChange={(e) =>
-              setSettings({
-                ...settings,
-                passSnrThreshold: Number(e.target.value),
-              })
-            }
+            integer
           />
         </div>
         <div className="form-group">
           <label>{t('settings.defaultDuration')}</label>
-          <input
-            type="number"
+          <NumericInput
+            value={settings.defaultDurationMs / 1000}
+            onChange={(sec) =>
+              setSettings({ ...settings, defaultDurationMs: sec * 1000 })
+            }
             min={2}
             max={30}
-            value={settings.defaultDurationMs / 1000}
-            onChange={(e) =>
-              setSettings({
-                ...settings,
-                defaultDurationMs: Number(e.target.value) * 1000,
-              })
-            }
+            integer
           />
         </div>
         <button type="button" className="btn btn-primary" onClick={() => void saveSettings()}>
