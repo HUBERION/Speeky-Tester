@@ -67,6 +67,15 @@ export async function downloadDocx(data: ExportData, filename: string): Promise<
           new Paragraph({
             children: [new TextRun(`${tGlobal('doc.project')}: ${data.sessionName}`)],
           }),
+          ...(data.sessionSite
+            ? [
+                new Paragraph({
+                  children: [
+                    new TextRun(`${tGlobal('doc.site')}: ${data.sessionSite}`),
+                  ],
+                }),
+              ]
+            : []),
           new Paragraph({
             children: [new TextRun(`${tGlobal('doc.exportDate')}: ${data.exportDate}`)],
           }),

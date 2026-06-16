@@ -44,6 +44,7 @@ export async function buildExportData(sessionId: number): Promise<ExportData> {
   });
   return {
     sessionName: session.name,
+    sessionSite: session.site,
     exportDate: new Date().toLocaleString(localeFor()),
     totalSpeakers: speakers.length,
     passCount: measurements.filter((m) => m.status === 'pass').length,

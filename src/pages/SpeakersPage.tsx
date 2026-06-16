@@ -1,27 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   addSpeaker,
-  createSession,
-  deleteSession,
   deleteSpeaker,
   getAllSessions,
   getSpeakersForSession,
-  setActiveSessionId,
   updateSpeaker,
 } from '../db';
 import { useSession } from '../hooks/useSession';
-import { fmtDateNow, useT } from '../i18n';
+import { useT } from '../i18n';
 import type { Speaker, TestSession } from '../types';
+import { CreateSessionModal } from '../components/CreateSessionModal';
 import { ImportModal } from '../components/ImportModal';
+import { SessionSwitchModal } from '../components/SessionSwitchModal';
 
 export function SpeakersPage() {
   const { t } = useT();
   const { session, refresh } = useSession();
   const [sessions, setSessions] = useState<TestSession[]>([]);
-  const [newSessionName, setNewSessionName] = useState('');
-  const [copyFromId, setCopyFromId] = useState<number | ''>('');
-
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
+  const [showCreateSession, setShowCreateSession] = useState(false);
+  const [showSwitchSession, setShowSwitchSession] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<Speaker | null>(null);
@@ -42,35 +40,6 @@ export function SpeakersPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function handleNewSession() {
-    const name =
-      newSessionName.trim() ||
-      t('sessions.defaultName', { date: fmtDateNow() });
-    const id = await createSession(
-      name,
-      copyFromId === '' ? undefined : copyFromId,
-    );
-    await setActiveSessionId(id);
-    setNewSessionName('');
-    setCopyFromId('');
-    await refresh();
-  }
-
-  async function handleDeleteSession(id: number) {
-    const target = sessions.find((s) => s.id === id);
-    if (!confirm(t('sessions.deleteConfirm', { name: target?.name ?? '' }))) {
-      return;
-    }
-    await deleteSession(id);
-    if (id === session?.id) {
-      await setActiveSessionId(null);
-      await refresh();
-    } else {
-      setSessions((prev) => prev.filter((s) => s.id !== id));
-      setCopyFromId((prev) => (prev === id ? '' : prev));
-    }
-  }
 
   function resetForm() {
     setName('');
@@ -140,87 +109,34 @@ export function SpeakersPage() {
     await load();
   }
 
+  async function handleSessionChanged() {
+    await refresh();
+    await load();
+  }
+
   if (!session) return <p>{t('common.loadingSession')}</p>;
 
   return (
     <>
       <div className="card">
-        <h2>{t('sessions.heading')}</h2>
-        <div className="form-group">
-          <input
-            placeholder={t('sessions.namePlaceholder')}
-            value={newSessionName}
-            onChange={(e) => setNewSessionName(e.target.value)}
-          />
+        <h2>{session.name}</h2>
+        {session.site && <p className="hint">{session.site}</p>}
+        <div className="btn-row">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setShowCreateSession(true)}
+          >
+            {t('sessions.newButton')}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowSwitchSession(true)}
+          >
+            {t('sessions.switchButton')}
+          </button>
         </div>
-        {sessions.length > 0 && (
-          <div className="form-group">
-            <label>{t('sessions.copyFrom')}</label>
-            <select
-              value={copyFromId}
-              onChange={(e) =>
-                setCopyFromId(e.target.value ? Number(e.target.value) : '')
-              }
-            >
-              <option value="">{t('sessions.copyNone')}</option>
-              {sessions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-            <p className="hint">{t('sessions.copyHint')}</p>
-          </div>
-        )}
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => void handleNewSession()}
-        >
-          {t('sessions.create')}
-        </button>
-      </div>
-
-      {sessions.length > 0 && (
-        <div className="card">
-          <h3>{t('sessions.manage')}</h3>
-          {sessions.map((s) => (
-            <div key={s.id} className="list-item">
-              <div className="list-item-info">
-                <strong>
-                  {s.name}
-                  {s.id === session.id ? ` (${t('common.active')})` : ''}
-                </strong>
-              </div>
-              <div className="btn-row" style={{ width: 'auto' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ width: 'auto', margin: 0, padding: '0.5rem 0.75rem' }}
-                  disabled={s.id === session.id}
-                  onClick={() => void setActiveSessionId(s.id!).then(refresh)}
-                >
-                  {t('sessions.switch')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  style={{ width: 'auto', margin: 0, padding: '0.5rem 0.75rem' }}
-                  onClick={() => void handleDeleteSession(s.id!)}
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="card">
-        <h2>{t('speakers.heading')}</h2>
-        <p className="hint">
-          {t('speakers.belongHint', { name: session.name })}
-        </p>
       </div>
 
       <div className="btn-row">
@@ -318,6 +234,23 @@ export function SpeakersPage() {
           ))
         )}
       </div>
+
+      {showCreateSession && (
+        <CreateSessionModal
+          sessions={sessions}
+          onClose={() => setShowCreateSession(false)}
+          onCreated={() => void handleSessionChanged()}
+        />
+      )}
+
+      {showSwitchSession && (
+        <SessionSwitchModal
+          sessions={sessions}
+          activeSessionId={session.id}
+          onClose={() => setShowSwitchSession(false)}
+          onChanged={() => void handleSessionChanged()}
+        />
+      )}
 
       {showImport && (
         <ImportModal

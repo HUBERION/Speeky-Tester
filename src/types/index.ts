@@ -19,6 +19,7 @@ export interface Speaker {
 export interface TestSession {
   id?: number;
   name: string;
+  site?: string;
   createdAt: string;
   settings: SessionSettings;
 }
@@ -99,6 +100,7 @@ export interface ExportRow {
 
 export interface ExportData {
   sessionName: string;
+  sessionSite?: string;
   exportDate: string;
   totalSpeakers: number;
   passCount: number;

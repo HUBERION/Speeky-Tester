@@ -6,7 +6,6 @@ const navItems = [
   { to: '/speakers', key: 'nav.speakers' },
   { to: '/measure', key: 'nav.measure' },
   { to: '/protocol', key: 'nav.protocol' },
-  { to: '/export', key: 'nav.export' },
   { to: '/settings', key: 'nav.settings' },
 ];
 

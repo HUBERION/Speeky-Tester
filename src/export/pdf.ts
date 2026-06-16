@@ -9,20 +9,27 @@ export function downloadPdf(data: ExportData, filename: string): void {
   doc.text(tGlobal('doc.reportTitle'), 14, 16);
   doc.setFontSize(10);
   doc.text(`${tGlobal('doc.project')}: ${data.sessionName}`, 14, 24);
-  doc.text(`${tGlobal('doc.exportDate')}: ${data.exportDate}`, 14, 30);
+  let metaY = 30;
+  if (data.sessionSite) {
+    doc.text(`${tGlobal('doc.site')}: ${data.sessionSite}`, 14, metaY);
+    metaY += 6;
+  }
+  doc.text(`${tGlobal('doc.exportDate')}: ${data.exportDate}`, 14, metaY);
+  metaY += 6;
   doc.text(
     `${tGlobal('doc.resultLabel')}: ${data.passCount} ${tGlobal('doc.passedWord')}, ${data.failCount} ${tGlobal('doc.failedWord')}, ${data.inconclusiveCount} ${tGlobal('doc.inconclusiveWord')} ${tGlobal('doc.ofTotal', { total: data.totalSpeakers })}`,
     14,
-    36,
+    metaY,
   );
+  metaY += 6;
   doc.text(
     `${tGlobal('doc.calibration')}: ${data.calibrationActive ? tGlobal('doc.calActive') : tGlobal('doc.calNotCalibrated')}`,
     14,
-    42,
+    metaY,
   );
 
   autoTable(doc, {
-    startY: 48,
+    startY: metaY + 6,
     head: [
       [
         tGlobal('doc.col.name'),

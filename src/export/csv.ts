@@ -12,6 +12,9 @@ function escapeCsv(value: string | number | boolean | undefined): string {
 export function buildCsv(data: ExportData): string {
   const lines: string[] = [
     `${tGlobal('doc.project')};${escapeCsv(data.sessionName)}`,
+    ...(data.sessionSite
+      ? [`${tGlobal('doc.site')};${escapeCsv(data.sessionSite)}`]
+      : []),
     `${tGlobal('doc.exportDate')};${escapeCsv(data.exportDate)}`,
     `${tGlobal('doc.totalSpeakers')};${data.totalSpeakers}`,
     `${tGlobal('status.pass')};${data.passCount}`,

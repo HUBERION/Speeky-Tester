@@ -41,6 +41,7 @@ export function downloadXlsx(data: ExportData, filename: string): void {
 
   const meta = [
     [tGlobal('doc.project'), data.sessionName],
+    ...(data.sessionSite ? [[tGlobal('doc.site'), data.sessionSite]] : []),
     [tGlobal('doc.exportDate'), data.exportDate],
     [tGlobal('doc.totalSpeakers'), data.totalSpeakers],
     [tGlobal('status.pass'), data.passCount],

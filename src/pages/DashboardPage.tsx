@@ -43,6 +43,7 @@ export function DashboardPage() {
             <p>
               <strong>{session.name}</strong>
             </p>
+            {session.site && <p className="hint">{session.site}</p>}
             <p className="hint">
               {t('dashboard.created', { date: fmtDateTime(session.createdAt) })}
             </p>
@@ -78,9 +79,6 @@ export function DashboardPage() {
       </Link>
       <Link to="/measure?mode=adhoc" className="btn btn-secondary">
         {t('dashboard.measureAdhoc')}
-      </Link>
-      <Link to="/speakers" className="btn btn-secondary">
-        {t('dashboard.manageLink')}
       </Link>
 
       <div className="card">

@@ -168,10 +168,12 @@ export async function getSession(id: number): Promise<TestSession | undefined> {
 export async function createSession(
   name: string,
   copyFromSessionId?: number,
+  site?: string,
 ): Promise<number> {
   const settings = await getAppSettings();
   const id = (await db.sessions.add({
     name,
+    site: site?.trim() || undefined,
     createdAt: new Date().toISOString(),
     settings: {
       defaultFrequency: settings.defaultFrequency,
