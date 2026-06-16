@@ -193,6 +193,14 @@ export function MeasurePage() {
       )}
 
       <div className="card">
+        <h2>{t('measure.activeSession')}</h2>
+        <p>
+          <strong>{session.name}</strong>
+        </p>
+        {session.site && <p className="hint">{session.site}</p>}
+      </div>
+
+      <div className="card">
         <h2>{t('measure.mode')}</h2>
         <div className="btn-row">
           <button

@@ -112,6 +112,7 @@ export const resources: Record<Lang, Record<string, unknown>> = {
       unsupported: 'Unsupported format. Please use CSV or XLS/XLSX.',
     },
     measure: {
+      activeSession: 'Current session',
       mode: 'Measurement mode',
       fromList: 'From list',
       adhoc: 'Ad-hoc',
@@ -354,6 +355,7 @@ export const resources: Record<Lang, Record<string, unknown>> = {
       unsupported: 'Nicht unterstütztes Format. Bitte CSV oder XLS/XLSX verwenden.',
     },
     measure: {
+      activeSession: 'Aktuelle Sitzung',
       mode: 'Messmodus',
       fromList: 'Aus Liste',
       adhoc: 'Ad-hoc',
