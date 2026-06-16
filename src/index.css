@@ -212,6 +212,11 @@ button {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.btn-row:last-child {
+  margin-bottom: 0;
 }
 
 .btn-row .btn {
