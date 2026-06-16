@@ -200,7 +200,7 @@ export function SpeakersPage() {
                 <small>{s.location}</small>
                 {s.note && <small>{s.note}</small>}
               </div>
-              <div className="btn-row btn-row--compact">
+              <div className="btn-row btn-row--icons">
                 <button
                   type="button"
                   className="btn btn-secondary"

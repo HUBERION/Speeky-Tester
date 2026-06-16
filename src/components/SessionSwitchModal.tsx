@@ -51,7 +51,7 @@ export function SessionSwitchModal({
                 </strong>
                 {s.site && <small>{s.site}</small>}
               </div>
-              <div className="btn-row btn-row--compact">
+              <div className="btn-row btn-row--inline">
                 <button
                   type="button"
                   className="btn btn-secondary"
