@@ -200,11 +200,10 @@ export function SpeakersPage() {
                 <small>{s.location}</small>
                 {s.note && <small>{s.note}</small>}
               </div>
-              <div className="btn-row" style={{ width: 'auto' }}>
+              <div className="btn-row btn-row--compact">
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  style={{ width: 'auto', margin: 0, padding: '0.5rem' }}
                   title={t('speakers.copyTitle')}
                   aria-label={t('speakers.copyTitle')}
                   onClick={() => void handleCopy(s)}
@@ -214,7 +213,6 @@ export function SpeakersPage() {
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  style={{ width: 'auto', margin: 0, padding: '0.5rem' }}
                   title={t('common.edit')}
                   onClick={() => startEdit(s)}
                 >
@@ -223,7 +221,6 @@ export function SpeakersPage() {
                 <button
                   type="button"
                   className="btn btn-danger"
-                  style={{ width: 'auto', margin: 0, padding: '0.5rem' }}
                   title={t('common.delete')}
                   onClick={() => void handleDelete(s.id!)}
                 >

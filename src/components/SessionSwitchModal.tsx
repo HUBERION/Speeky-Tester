@@ -51,11 +51,10 @@ export function SessionSwitchModal({
                 </strong>
                 {s.site && <small>{s.site}</small>}
               </div>
-              <div className="btn-row" style={{ width: 'auto' }}>
+              <div className="btn-row btn-row--compact">
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  style={{ width: 'auto', margin: 0, padding: '0.5rem 0.75rem' }}
                   disabled={s.id === activeSessionId}
                   onClick={() => void handleSwitch(s.id!)}
                 >
@@ -64,7 +63,6 @@ export function SessionSwitchModal({
                 <button
                   type="button"
                   className="btn btn-danger"
-                  style={{ width: 'auto', margin: 0, padding: '0.5rem 0.75rem' }}
                   onClick={() => void handleDelete(s.id!)}
                 >
                   ✕
