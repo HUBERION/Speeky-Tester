@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   frequencyToleranceHz: 50,
   passSnrThreshold: 6,
   defaultDurationMs: 5000,
+  theme: 'system',
 };
 
 const DEFAULT_SESSION_SETTINGS = {

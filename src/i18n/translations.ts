@@ -181,6 +181,14 @@ export const resources: Record<Lang, Record<string, unknown>> = {
     },
     settings: {
       defaults: 'Default settings',
+      themeHeading: 'Appearance',
+      themeLabel: 'Color theme',
+      themeHint: '“Match system” follows your device’s light/dark setting.',
+      theme: {
+        system: 'Match system',
+        light: 'Light',
+        dark: 'Dark',
+      },
       defaultFreq: 'Default frequency (Hz)',
       defaultSpread: 'Default frequency spread (± Hz)',
       spreadHint: 'Signal is measured in the range target frequency ± spread (e.g. ±50 Hz).',
@@ -424,6 +432,14 @@ export const resources: Record<Lang, Record<string, unknown>> = {
     },
     settings: {
       defaults: 'Standardeinstellungen',
+      themeHeading: 'Darstellung',
+      themeLabel: 'Farbschema',
+      themeHint: '„System übernehmen“ folgt der Hell/Dunkel-Einstellung des Geräts.',
+      theme: {
+        system: 'System übernehmen',
+        light: 'Hell',
+        dark: 'Dunkel',
+      },
       defaultFreq: 'Standard-Frequenz (Hz)',
       defaultSpread: 'Standard Frequenz-Streuung (± Hz)',
       spreadHint: 'Signal wird im Bereich Zielfrequenz ± Streuung gemessen (z. B. ±50 Hz).',

@@ -1,10 +1,4 @@
 :root {
-  --bg: #0f1419;
-  --surface: #1a2332;
-  --surface2: #243044;
-  --border: #334155;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
   --primary: #3b82f6;
   --primary-hover: #2563eb;
   --success: #22c55e;
@@ -13,6 +7,43 @@
   --radius: 12px;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
+  color-scheme: light dark;
+}
+
+[data-theme='light'] {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --badge-pass-bg: rgba(34, 197, 94, 0.15);
+  --badge-fail-bg: rgba(239, 68, 68, 0.15);
+  --badge-inconclusive-bg: rgba(245, 158, 11, 0.15);
+  --badge-pending-bg: rgba(100, 116, 139, 0.15);
+  --modal-backdrop: rgba(15, 23, 42, 0.45);
+  --result-pass-bg: rgba(34, 197, 94, 0.12);
+  --result-fail-bg: rgba(239, 68, 68, 0.12);
+  --result-inconclusive-bg: rgba(245, 158, 11, 0.12);
+  color: var(--text);
+  background: var(--bg);
+}
+
+[data-theme='dark'] {
+  --bg: #0f1419;
+  --surface: #1a2332;
+  --surface2: #243044;
+  --border: #334155;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --badge-pass-bg: rgba(34, 197, 94, 0.2);
+  --badge-fail-bg: rgba(239, 68, 68, 0.2);
+  --badge-inconclusive-bg: rgba(245, 158, 11, 0.2);
+  --badge-pending-bg: rgba(148, 163, 184, 0.2);
+  --modal-backdrop: rgba(0, 0, 0, 0.6);
+  --result-pass-bg: rgba(34, 197, 94, 0.15);
+  --result-fail-bg: rgba(239, 68, 68, 0.15);
+  --result-inconclusive-bg: rgba(245, 158, 11, 0.15);
   color: var(--text);
   background: var(--bg);
 }
@@ -311,22 +342,22 @@ button {
 }
 
 .badge-pass {
-  background: rgba(34, 197, 94, 0.2);
+  background: var(--badge-pass-bg);
   color: var(--success);
 }
 
 .badge-fail {
-  background: rgba(239, 68, 68, 0.2);
+  background: var(--badge-fail-bg);
   color: var(--danger);
 }
 
 .badge-inconclusive {
-  background: rgba(245, 158, 11, 0.2);
+  background: var(--badge-inconclusive-bg);
   color: var(--warning);
 }
 
 .badge-pending {
-  background: rgba(148, 163, 184, 0.2);
+  background: var(--badge-pending-bg);
   color: var(--muted);
 }
 
@@ -382,7 +413,7 @@ button {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--modal-backdrop);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -421,16 +452,16 @@ button {
 }
 
 .result-box.pass {
-  background: rgba(34, 197, 94, 0.15);
+  background: var(--result-pass-bg);
   border: 1px solid var(--success);
 }
 
 .result-box.fail {
-  background: rgba(239, 68, 68, 0.15);
+  background: var(--result-fail-bg);
   border: 1px solid var(--danger);
 }
 
 .result-box.inconclusive {
-  background: rgba(245, 158, 11, 0.15);
+  background: var(--result-inconclusive-bg);
   border: 1px solid var(--warning);
 }

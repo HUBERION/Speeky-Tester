@@ -9,10 +9,12 @@ import {
 import { AudioAnalyzer } from '../audio/analyzer';
 import { NumericInput } from '../components/NumericInput';
 import { fmtDateTime, useT } from '../i18n';
+import { THEME_PREFERENCES, useTheme, type ThemePreference } from '../theme';
 import type { AppSettings, Calibration } from '../types';
 
 export function SettingsPage() {
   const { t } = useT();
+  const { preference, setPreference } = useTheme();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [calibration, setCalibration] = useState<Calibration | null>(null);
   const [refDbSpl, setRefDbSpl] = useState('94');
@@ -83,6 +85,24 @@ export function SettingsPage() {
 
   return (
     <>
+      <div className="card">
+        <h2>{t('settings.themeHeading')}</h2>
+        <div className="form-group">
+          <label>{t('settings.themeLabel')}</label>
+          <select
+            value={preference}
+            onChange={(e) => setPreference(e.target.value as ThemePreference)}
+          >
+            {THEME_PREFERENCES.map((option) => (
+              <option key={option} value={option}>
+                {t(`settings.theme.${option}`)}
+              </option>
+            ))}
+          </select>
+          <p className="hint">{t('settings.themeHint')}</p>
+        </div>
+      </div>
+
       <div className="card">
         <h2>{t('settings.defaults')}</h2>
         <div className="form-group">

@@ -54,12 +54,15 @@ export interface Calibration {
   updatedAt: string;
 }
 
+export type ThemePreference = 'system' | 'light' | 'dark';
+
 export interface AppSettings {
   id?: number;
   defaultFrequency: number;
   frequencyToleranceHz: number;
   passSnrThreshold: number;
   defaultDurationMs: number;
+  theme?: ThemePreference;
 }
 
 export interface LiveFrame {
