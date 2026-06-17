@@ -1,0 +1,1 @@
+{"name":"Speeky-Tester","short_name":"Speeky","description":"Lautsprecher-Messung mit externem Testton – offline-fähige PWA","start_url":"/","display":"standalone","background_color":"#0f1419","theme_color":"#1a2332","lang":"de","scope":"/Speeky-Tester/","orientation":"portrait","icons":[{"src":"icons.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
