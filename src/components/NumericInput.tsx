@@ -10,9 +10,17 @@ interface NumericInputProps {
   integer?: boolean;
 }
 
-function isPartialNumber(text: string, integer: boolean): boolean {
-  if (text === '') return true;
-  return integer ? /^\d+$/.test(text) : /^\d*\.?\d*$/.test(text);
+function clamp(
+  value: number,
+  min?: number,
+  max?: number,
+  integer?: boolean,
+): number {
+  let next = value;
+  if (integer) next = Math.round(next);
+  if (min != null) next = Math.max(min, next);
+  if (max != null) next = Math.min(max, next);
+  return next;
 }
 
 export function NumericInput({
@@ -20,44 +28,54 @@ export function NumericInput({
   onChange,
   min,
   max,
-  step,
+  step = 1,
   disabled,
   integer = false,
 }: NumericInputProps) {
   const [text, setText] = useState(String(value));
+  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    setText(String(value));
-  }, [value]);
+    if (!focused) {
+      setText(String(value));
+    }
+  }, [value, focused]);
 
   function commit(raw: string) {
     let next = Number(raw);
     if (raw.trim() === '' || Number.isNaN(next)) {
       next = min ?? value;
     }
-    if (min != null) next = Math.max(min, next);
-    if (max != null) next = Math.min(max, next);
-    if (integer) next = Math.round(next);
+    next = clamp(next, min, max, integer);
     onChange(next);
     setText(String(next));
   }
 
+  function handleChange(raw: string) {
+    if (raw === '') {
+      setText('');
+      return;
+    }
+    const num = Number(raw);
+    if (Number.isNaN(num)) return;
+    setText(raw);
+    onChange(clamp(num, min, max, integer));
+  }
+
   return (
     <input
-      type="text"
-      inputMode={integer ? 'numeric' : 'decimal'}
+      type="number"
       min={min}
       max={max}
       step={step}
       disabled={disabled}
       value={text}
-      onChange={(e) => {
-        const next = e.target.value;
-        if (isPartialNumber(next, integer)) {
-          setText(next);
-        }
+      onChange={(e) => handleChange(e.target.value)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => {
+        setFocused(false);
+        commit(text);
       }}
-      onBlur={() => commit(text)}
     />
   );
 }

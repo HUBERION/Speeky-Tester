@@ -17,7 +17,7 @@ export function SettingsPage() {
   const { preference, setPreference } = useTheme();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [calibration, setCalibration] = useState<Calibration | null>(null);
-  const [refDbSpl, setRefDbSpl] = useState('94');
+  const [refDbSpl, setRefDbSpl] = useState(94);
   const [measuring, setMeasuring] = useState(false);
   const [measuredDbfs, setMeasuredDbfs] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
@@ -28,7 +28,7 @@ export function SettingsPage() {
     setSettings(s);
     setCalibration(c ?? null);
     if (c) {
-      setRefDbSpl(String(c.referenceDbSpl));
+      setRefDbSpl(c.referenceDbSpl);
       setMeasuredDbfs(c.referenceDbfs);
     }
   }, []);
@@ -62,7 +62,7 @@ export function SettingsPage() {
 
   async function saveCalibrationData() {
     if (measuredDbfs === null) return;
-    const referenceDbSpl = Number(refDbSpl);
+    const referenceDbSpl = refDbSpl;
     const data: Calibration = {
       referenceDbfs: measuredDbfs,
       referenceDbSpl,
@@ -168,10 +168,13 @@ export function SettingsPage() {
         <p className="hint">{t('settings.splHint')}</p>
         <div className="form-group">
           <label>{t('settings.refLevel')}</label>
-          <input
-            type="number"
+          <NumericInput
             value={refDbSpl}
-            onChange={(e) => setRefDbSpl(e.target.value)}
+            onChange={setRefDbSpl}
+            min={40}
+            max={140}
+            step={1}
+            integer
           />
         </div>
         <button

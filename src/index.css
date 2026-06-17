@@ -307,6 +307,16 @@ button {
   color: var(--text);
 }
 
+.form-group input[type='number'] {
+  appearance: auto;
+  -moz-appearance: number-input;
+}
+
+.form-group input[type='number']::-webkit-inner-spin-button,
+.form-group input[type='number']::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
 .form-group textarea {
   min-height: 80px;
   resize: vertical;
