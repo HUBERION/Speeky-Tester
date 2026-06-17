@@ -181,7 +181,8 @@ export const resources: Record<Lang, Record<string, unknown>> = {
     },
     settings: {
       defaults: 'Default settings',
-      themeHeading: 'Appearance',
+      appearanceHeading: 'Appearance',
+      langLabel: 'Language',
       themeLabel: 'Color theme',
       themeHint: '“Match system” follows your device’s light/dark setting.',
       theme: {
@@ -432,7 +433,8 @@ export const resources: Record<Lang, Record<string, unknown>> = {
     },
     settings: {
       defaults: 'Standardeinstellungen',
-      themeHeading: 'Darstellung',
+      appearanceHeading: 'Darstellung',
+      langLabel: 'Sprache',
       themeLabel: 'Farbschema',
       themeHint: '„System übernehmen“ folgt der Hell/Dunkel-Einstellung des Geräts.',
       theme: {

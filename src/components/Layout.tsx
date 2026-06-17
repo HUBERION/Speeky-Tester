@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { LANGS, useT, type Lang } from '../i18n';
+import { useT } from '../i18n';
 
 const navItems = [
   { to: '/', key: 'nav.home', end: true },
@@ -10,7 +10,7 @@ const navItems = [
 ];
 
 export function Layout() {
-  const { t, lang, setLang } = useT();
+  const { t } = useT();
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -18,18 +18,6 @@ export function Layout() {
           <h1>{t('app.title')}</h1>
           <p>{t('app.subtitle')}</p>
         </div>
-        <label className="lang-select" aria-label={t('lang.label')}>
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value as Lang)}
-          >
-            {LANGS.map((l) => (
-              <option key={l} value={l}>
-                {t(`lang.${l}`)}
-              </option>
-            ))}
-          </select>
-        </label>
       </header>
       <main className="app-main">
         <Outlet />

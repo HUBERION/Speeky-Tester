@@ -8,12 +8,12 @@ import {
 } from '../db';
 import { AudioAnalyzer } from '../audio/analyzer';
 import { NumericInput } from '../components/NumericInput';
-import { fmtDateTime, useT } from '../i18n';
+import { fmtDateTime, LANGS, useT, type Lang } from '../i18n';
 import { THEME_PREFERENCES, useTheme, type ThemePreference } from '../theme';
 import type { AppSettings, Calibration } from '../types';
 
 export function SettingsPage() {
-  const { t } = useT();
+  const { t, lang, setLang } = useT();
   const { preference, setPreference } = useTheme();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [calibration, setCalibration] = useState<Calibration | null>(null);
@@ -86,7 +86,20 @@ export function SettingsPage() {
   return (
     <>
       <div className="card">
-        <h2>{t('settings.themeHeading')}</h2>
+        <h2>{t('settings.appearanceHeading')}</h2>
+        <div className="form-group">
+          <label>{t('settings.langLabel')}</label>
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value as Lang)}
+          >
+            {LANGS.map((option) => (
+              <option key={option} value={option}>
+                {t(`lang.${option}`)}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="form-group">
           <label>{t('settings.themeLabel')}</label>
           <select
